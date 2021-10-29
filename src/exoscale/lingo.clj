@@ -22,17 +22,59 @@
     (-> name symbol)))
 
 (def ^:dynamic *pred-matchers*
-  '[[(contains? % ?key) (format "`missing key %s`" ?key)]
-    [(m/pred set? ?set) (format "`should be one of %s`" (str/join "," (sort ?set)))]
-    [(m/pred ident? ?id) (format "`should be a valid %s`" (or (spec-name ?id)
-                                                              (strip-core ?id)))]
+  '[[(contains? % ?key)
+     (format "`missing key %s`" ?key)]
+
+    [(m/pred set? ?set)
+     (format "`should be one of %s`" (str/join "," (sort ?set)))]
+
+    [(m/pred ident? ?id)
+     (format "`should match %s`" (or (spec-name ?id)
+                                     (strip-core ?id)))]
 
     ;; `every` (coll-of, etc...) :min-count, :max-count, :count
-    [(<= ?min-count (count %) ?max-count) (format "`should contain between %s %s elements`"
-                                                  ?min-count ?max-count)]
-    [(= 1 (count %)) (format "`should contain only 1 element`")]
-    [(= ?count (count %)) (format "`should contain exactly %s elements`"
-                                  ?count)]])
+    [(<= ?min-count (count %) ?max-count)
+     (format "`should contain between %s %s elements`"
+             ?min-count ?max-count)]
+
+    [(= 1 (count %))
+     (format "`should contain only 1 element`")]
+
+    [(= ?count (count %))
+     (format "`should contain exactly %s elements`"
+             ?count)]
+
+    ;; int-in
+    [(clojure.spec.alpha/int-in-range? ?min ?max %)
+     (format "should be an Integer between %s %s"
+             ?min ?max)]
+
+    ;; double-in
+    [(clojure.spec.alpha/double-in-range? ?min ?max %)
+     (format "should be a Double between %s %s"
+             ?min ?max)]
+
+    ;; ;; double-in
+    ;; [(clojure.spec.alpha/inst-in-range? ?min ?max %)
+    ;;  (format "should be an Inst between %s %s"
+    ;;          ?min ?max)]
+
+    [(exoscale.specs.string/string-of* % ?pt)
+     (with-out-str
+       (print "should be a String ")
+       (let [{:keys [length min-length max-length blank? rx]} ?pt]
+         (print (str/join ", "
+                          (cond-> []
+                            (false? blank?)
+                            (conj "non blank")
+                            min-length
+                            (conj (format "at least %d characters in length" min-length))
+                            max-length
+                            (conj (format "at most %d characters in length" max-length))
+                            length
+                            (conj (format "exactly %d characters in length" length))
+                            rx
+                            (conj (format "matching the regex %s" rx)))))))]])
 
 (defn make-pred-matcher [ptns]
   (eval `(fn [x#]
@@ -48,7 +90,7 @@
   (make-pred-matcher *pred-matchers*))
 
 (defn- abbrev [form]
-  (cond
+  (cond->> form
     (seq? form)
     (walk/postwalk (fn [form]
                      (let [qs? (qualified-symbol? form)]
@@ -70,9 +112,7 @@
                               ;; (= '[%] (second form))
                               )
                          (last form)
-                         :else form)))
-                   form)
-    :else form))
+                         :else form))))))
 
 (defn pred-str
   [pred pred-matcher]
@@ -127,6 +167,7 @@
 
     (println "Success!")))
 
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn explain-str
   "Like spec explain-str, but uses lingo printer"
   [spec x]
@@ -134,13 +175,14 @@
     (binding [s/*explain-out* explain-printer]
       (s/explain spec x))))
 
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn explain
   "Like spec explain, but uses lingo printer"
   [spec x]
   (binding [s/*explain-out* explain-printer]
     (s/explain spec x)))
 
-;; set defaults for common preds
+;; set defaults for common idents
 
 (xs/with-meta! `string? {::name "String"})
 (xs/with-meta! `char? {::name "Character"})
@@ -170,6 +212,7 @@
 (xs/with-meta! `neg-int? {::name "Negative Integer"})
 (xs/with-meta! `inst? {::name "Instant"})
 (xs/with-meta! `some? {::name "Non-nil"})
+(xs/with-meta! `nil? {::name "nil"})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; playground
@@ -214,14 +257,11 @@
   (add-pred-matcher! '(pos? (count %)) "should be non blank")
   (explain (s/and string? #(pos? (count %))) ""))
 
-;; (require '[exoscale.specs.string :as xss])
-;; (do
-;;   (space)
-;;   (add-pred-matcher! '(exoscale.specs.string/string-of* % ?pt)
-;;                      '(format "should be a string with following attributes %s" ?pt))
-;;   (explain (s/and string? (xss/string-of {:blank? false :min-length 3 :max-length 10})) ""))
+(require '[exoscale.specs.string :as xss])
+(do
+  (space)
+  (explain (s/and string? #(xss/string-of* % {:blank? false :min-length 3 :max-length 10})) ""))
 
-;; (do
 ;;   (space)
 ;;   (explain (s/and string? something?) ""))
 
@@ -262,8 +302,8 @@
   (space)
   (explain :foo/person {:names [1 :yolo]}))
 
-;; (do
-;;   (s/explain (s/int-in 0 20) ""))
+(do
+  (explain nil? 1))
 
 ;; (require '[exoscale.specs.string :as xss])
 
