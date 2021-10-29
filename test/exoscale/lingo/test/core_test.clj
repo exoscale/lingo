@@ -109,4 +109,12 @@
 
     (s/coll-of any? :count 1)
     [1 1 1 1]
-    "[1 1 1 1] is invalid: should contain only 1 element\n"))
+    "[1 1 1 1] is invalid: should contain only 1 element\n"
+
+    (s/coll-of any? :kind set?)
+    [1]
+    "[1] is invalid: should match Set\n"
+
+    (s/map-of any? any? :count 1)
+    {:a 1 :b 2}
+    "{:a 1, :b 2} is invalid: should contain only 1 element\n"))
