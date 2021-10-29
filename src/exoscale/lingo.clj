@@ -65,6 +65,15 @@
                                    (exoscale.lingo/strip-core ?id)))]
 
     ;; `every` (coll-of, etc...) :min-count, :max-count, :count
+
+    [(<= ?min-count (count %) Integer/MAX_VALUE)
+     (format "should contain at least %s elements"
+             ?min-count)]
+
+    [(<= 0 (count %) ?max-count)
+     (format "should contain at most %s elements"
+             ?max-count)]
+
     [(<= ?min-count (count %) ?max-count)
      (format "should contain between %s %s elements"
              ?min-count ?max-count)]
@@ -313,6 +322,7 @@
   (do
     (explain nil? 1)))
 
+;; (explain (s/coll-of any? :max-count 3 :min-count 2) [1 2 3 4])
 ;; (require '[exoscale.specs.string :as xss])
 
 ;; (do
@@ -354,4 +364,3 @@
 ;;   (s/def ::animal2 ::animal)
 ;;   (println (explain-str int? "1"))
 ;;   (println))
-(explain (s/double-in :min 0 :max 10) (double 11))

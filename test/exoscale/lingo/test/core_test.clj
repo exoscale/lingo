@@ -89,4 +89,24 @@
 
     (s/double-in :infinite? false)
     ##Inf
-    "##Inf is invalid: cannot be Infinite\n"))
+    "##Inf is invalid: cannot be Infinite\n"
+
+    (s/coll-of any? :min-count 3)
+    [1]
+    "[1] is invalid: should contain at least 3 elements\n"
+
+    (s/coll-of any? :max-count 3)
+    [1 1 1 1]
+    "[1 1 1 1] is invalid: should contain at most 3 elements\n"
+
+    (s/coll-of any? :max-count 3 :min-count 1)
+    [1 1 1 1]
+    "[1 1 1 1] is invalid: should contain between 1 3 elements\n"
+
+    (s/coll-of any? :count 3)
+    [1 1 1 1]
+    "[1 1 1 1] is invalid: should contain exactly 3 elements\n"
+
+    (s/coll-of any? :count 1)
+    [1 1 1 1]
+    "[1 1 1 1] is invalid: should contain only 1 element\n"))
