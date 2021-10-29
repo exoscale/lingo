@@ -15,10 +15,24 @@
     (format " spec: %s (%s)" (pr-str spec) sn)
     (str " spec: " (pr-str spec))))
 
+(defn strip-core
+  [sym]
+  (cond-> sym
+    (= (namespace sym) "clojure.core")
+    (-> name symbol)))
+
 (def ^:dynamic *pred-matchers*
   '[[(contains? % ?key) (format "`missing key %s`" ?key)]
     [(m/pred set? ?set) (format "`should be one of %s`" (str/join "," (sort ?set)))]
-    [(m/pred ident? ?id) (format "`should be a valid %s`" (spec-name ?id))]])
+    [(m/pred ident? ?id) (format "`should be a valid %s`" (or (spec-name ?id)
+                                                              (strip-core ?id)))]
+
+    ;; `every` (coll-of, etc...) :min-count, :max-count, :count
+    [(<= ?min-count (count %) ?max-count) (format "`should contain between %s %s elements`"
+                                                  ?min-count ?max-count)]
+    [(= 1 (count %)) (format "`should contain only 1 element`")]
+    [(= ?count (count %)) (format "`should contain exactly %s elements`"
+                                  ?count)]])
 
 (defn make-pred-matcher [ptns]
   (eval `(fn [x#]
@@ -43,9 +57,9 @@
                          (and qs? (= "%" (name form)))
                          (symbol "%")
 
-                         ;; it's a core symbol, remove ns
-                         (and qs? (= (namespace form) "clojure.core"))
-                         (-> form name symbol)
+                         ;; it's could be a core symbol, in that case remove ns
+                         qs?
+                         (strip-core form)
 
                          ;; ;; not core
                          ;; (and qs? (not core?))
@@ -134,6 +148,7 @@
 (xs/with-meta! `string? {::name "String"})
 (xs/with-meta! `map? {::name "Map"})
 (xs/with-meta! `coll? {::name "Collection"})
+(xs/with-meta! `set? {::name "Set"})
 (xs/with-meta! `number? {::name "Number"})
 (xs/with-meta! `int? {::name "Integer"})
 (xs/with-meta! `nat-int? {::name "Integer"})
@@ -191,6 +206,16 @@
 (do
   (space)
   (explain coll? 1))
+
+(do
+  (space)
+  (s/def ::c1 (s/map-of int? int? :count 3))
+  (explain ::c1 {"a" "b"}))
+
+(do
+  (space)
+  (s/def ::c1 neg-int?)
+  (explain ::c1 [1 1]))
 
 (do
   (space)
