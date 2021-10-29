@@ -172,4 +172,11 @@
 
     nil?
     1
-    "1 is invalid: should match nil\n"))
+    "1 is invalid: should match nil\n"
+
+    ;; (do
+    ;;   (defn f2? [x])
+    ;;   (xs/with-meta! `f2? {::name "yolo"}))
+    ;; 1
+    ;; "1 is invalid: should match yolo"
+    ))

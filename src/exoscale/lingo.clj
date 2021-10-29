@@ -58,7 +58,7 @@
     (-> name symbol)))
 
 (def ^:dynamic *pred-matchers*
-  '([(contains? % ?key)
+  '[[(contains? % ?key)
      (format "missing key %s" ?key)]
 
     [(meander.epsilon/pred set? ?set)
@@ -150,7 +150,7 @@
      "Incorrect IPV4"]
 
     [(.isValidInet6Address exoscale.specs.net/validator %)
-     "Incorrect IPV6"]))
+     "Incorrect IPV6"]])
 
 (defn make-pred-matcher [ptns]
   ;; we could try to do this via a macro instead of using eval
@@ -204,10 +204,9 @@
          ptn-out# ~ptn-out
          ptns# (alter-var-root #'*pred-matchers*
                                (fn [pred-matchers#]
-                                 (-> (empty pred-matchers#)
-                                     (into (remove #(->> % first (= ptn-in#)))
-                                           pred-matchers#)
-                                     (conj [ptn-in# ptn-out#]))))]
+                                 (into [[ptn-in# ptn-out#]]
+                                       (remove #(->> % first (= ptn-in#)))
+                                       pred-matchers#)))]
      (alter-var-root #'*pred-matcher*
                      (fn [_#] (make-pred-matcher ptns#)))))
 
@@ -382,12 +381,12 @@
 ;;   (println))
 ;; (explain :exoscale.specs.net/url "")
 
-;; (defn f?
+;; (defn f2?
 ;;   [x]
 ;;   false)
 
-;; (def-pred-matcher 'exoscale.lingo/f? "boom")
+;; (xs/with-meta! `f2? {::name "yolo"})
 
-;; (last *pred-matchers*)
+;; ;; (def-pred-matcher 'exoscale.lingo/f2? "boom")
 
-;; (explain-str exoscale.lingo/f? 1)
+;; (explain f2? 1)
