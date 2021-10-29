@@ -58,7 +58,7 @@
     (-> name symbol)))
 
 (def ^:dynamic *pred-matchers*
-  '[[(contains? % ?key)
+  '([(contains? % ?key)
      (format "missing key %s" ?key)]
 
     [(meander.epsilon/pred set? ?set)
@@ -150,7 +150,7 @@
      "Incorrect IPV4"]
 
     [(.isValidInet6Address exoscale.specs.net/validator %)
-     "Incorrect IPV6"]])
+     "Incorrect IPV6"]))
 
 (defn make-pred-matcher [ptns]
   ;; we could try to do this via a macro instead of using eval
@@ -194,6 +194,7 @@
 
 (defn pred-str
   [pred pred-matcher]
+  ;; (prn :abbrfev (abbrev pred))
   (pred-matcher (abbrev pred)))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
@@ -380,3 +381,13 @@
 ;;   (println (explain-str int? "1"))
 ;;   (println))
 ;; (explain :exoscale.specs.net/url "")
+
+;; (defn f?
+;;   [x]
+;;   false)
+
+;; (def-pred-matcher 'exoscale.lingo/f? "boom")
+
+;; (last *pred-matchers*)
+
+;; (explain-str exoscale.lingo/f? 1)
