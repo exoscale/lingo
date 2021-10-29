@@ -7,39 +7,41 @@
 
 ;; set defaults for common idents
 
-(xs/with-meta! `string? {::name "String"})
-(xs/with-meta! `char? {::name "Character"})
-(xs/with-meta! `map? {::name "Map"})
-(xs/with-meta! `coll? {::name "Collection"})
-(xs/with-meta! `set? {::name "Set"})
-(xs/with-meta! `vector? {::name "Vector"})
-(xs/with-meta! `associative? {::name "Associative (map, vector)"})
-(xs/with-meta! `sequential? {::name "Sequential"})
-(xs/with-meta! `number? {::name "Number"})
-(xs/with-meta! `bytes? {::name "Bytes"})
-(xs/with-meta! `float? {::name "Float"})
-(xs/with-meta! `double? {::name "Double"})
-(xs/with-meta! `boolean? {::name "Boolean"})
-(xs/with-meta! `true? {::name "true"})
-(xs/with-meta! `false? {::name "false"})
-(xs/with-meta! `zero? {::name "Zero"})
-(xs/with-meta! `empty? {::name "Empty"})
-(xs/with-meta! `ident? {::name "Identifier (keyword or symbol)"})
-(xs/with-meta! `qualified-ident? {::name "Qualified Identifier (keyword or symbol)"})
-(xs/with-meta! `symbol? {::name "Symbol"})
-(xs/with-meta! `uuid? {::name "UUID"})
-(xs/with-meta! `uri? {::name "URI"})
-(xs/with-meta! `int? {::name "Integer"})
-(xs/with-meta! `nat-int? {::name "Integer"})
-(xs/with-meta! `pos-int? {::name "Positive Integer"})
-(xs/with-meta! `neg-int? {::name "Negative Integer"})
-(xs/with-meta! `inst? {::name "Instant"})
-(xs/with-meta! `some? {::name "Non-nil"})
-(xs/with-meta! `nil? {::name "nil"})
+(xs/with-meta! `string? {:exoscale.lingo/name "String"})
+(xs/with-meta! `char? {:exoscale.lingo/name "Character"})
+(xs/with-meta! `map? {:exoscale.lingo/name "Map"})
+(xs/with-meta! `coll? {:exoscale.lingo/name "Collection"})
+(xs/with-meta! `set? {:exoscale.lingo/name "Set"})
+(xs/with-meta! `vector? {:exoscale.lingo/name "Vector"})
+(xs/with-meta! `associative? {:exoscale.lingo/name "Associative (map, vector)"})
+(xs/with-meta! `sequential? {:exoscale.lingo/name "Sequential"})
+(xs/with-meta! `number? {:exoscale.lingo/name "Number"})
+(xs/with-meta! `bytes? {:exoscale.lingo/name "Bytes"})
+(xs/with-meta! `float? {:exoscale.lingo/name "Float"})
+(xs/with-meta! `double? {:exoscale.lingo/name "Double"})
+(xs/with-meta! `boolean? {:exoscale.lingo/name "Boolean"})
+(xs/with-meta! `true? {:exoscale.lingo/name "true"})
+(xs/with-meta! `false? {:exoscale.lingo/name "false"})
+(xs/with-meta! `zero? {:exoscale.lingo/name "Zero"})
+(xs/with-meta! `empty? {:exoscale.lingo/name "Empty"})
+(xs/with-meta! `ident? {:exoscale.lingo/name "Identifier (keyword or symbol)"})
+(xs/with-meta! `qualified-ident? {:exoscale.lingo/name "Qualified Identifier (keyword or symbol)"})
+(xs/with-meta! `symbol? {:exoscale.lingo/name "Symbol"})
+(xs/with-meta! `uuid? {:exoscale.lingo/name "UUID"})
+(xs/with-meta! `uri? {:exoscale.lingo/name "URI"})
+(xs/with-meta! `int? {:exoscale.lingo/name "Integer"})
+(xs/with-meta! `nat-int? {:exoscale.lingo/name "Integer"})
+(xs/with-meta! `pos-int? {:exoscale.lingo/name "Positive Integer"})
+(xs/with-meta! `neg-int? {:exoscale.lingo/name "Negative Integer"})
+(xs/with-meta! `pos? {:exoscale.lingo/name "Positive number"})
+(xs/with-meta! `neg? {:exoscale.lingo/name "Negative number"})
+(xs/with-meta! `inst? {:exoscale.lingo/name "Instant"})
+(xs/with-meta! `some? {:exoscale.lingo/name "Non-nil"})
+(xs/with-meta! `nil? {:exoscale.lingo/name "nil"})
 
 (defn spec-name
   [spec]
-  (get (xs/meta spec) ::name))
+  (get (xs/meta spec) :exoscale.lingo/name))
 
 (defn spec-str
   [spec]
@@ -199,7 +201,7 @@
   "Custom printer for explain-data. nil indicates a successful validation."
   [{:as ed
     :clojure.spec.alpha/keys [problems]
-    ::keys [pred-matcher]
+    :exoscale.lingo/keys [pred-matcher]
     :or {pred-matcher *pred-matcher*}}]
   (if ed
     (let [problems (->> problems
@@ -288,13 +290,13 @@
 
   (do
     (space)
-    (s/def ::c1 (s/map-of int? int? :count 3))
-    (explain ::c1 {"a" "b"}))
+    (s/def :exoscale.lingo/c1 (s/map-of int? int? :count 3))
+    (explain :exoscale.lingo/c1 {"a" "b"}))
 
   (do
     (space)
-    (s/def ::c1 neg-int?)
-    (explain ::c1 [1 1]))
+    (s/def :exoscale.lingo/c1 neg-int?)
+    (explain :exoscale.lingo/c1 [1 1]))
 
   (do
     (space)
@@ -331,36 +333,36 @@
 
 ;; (do
 ;;   (println (apply str (repeat 80 "-")))
-;;   (s/def ::animal (s/coll-of ::names))
-;;   (println (explain-str ::animal [[::foo :bar]]))
+;;   (s/def :exoscale.lingo/animal (s/coll-of :exoscale.lingo/names))
+;;   (println (explain-str :exoscale.lingo/animal [[:exoscale.lingo/foo :bar]]))
 ;;   (println))
 
 ;; (do
 ;;   (println (apply str (repeat 80 "-")))
-;;   (s/def ::animal #{:a :b :c})
-;;   (println (explain-str ::animal 1))
+;;   (s/def :exoscale.lingo/animal #{:a :b :c})
+;;   (println (explain-str :exoscale.lingo/animal 1))
 ;;   (println))
 
 ;; (do
 ;;   (println (apply str (repeat 80 "-")))
-;;   (s/def ::animal #{:a :b :c})
-;;   (println (explain-str ::animal "d"))
+;;   (s/def :exoscale.lingo/animal #{:a :b :c})
+;;   (println (explain-str :exoscale.lingo/animal "d"))
 ;;   (println))
 
 ;; (do
 ;;   (println (apply str (repeat 80 "-")))
-;;   (s/def ::animal2 ::animal)
-;;   (println (explain-str ::animal2 1))
+;;   (s/def :exoscale.lingo/animal2 :exoscale.lingo/animal)
+;;   (println (explain-str :exoscale.lingo/animal2 1))
 ;;   (println))
 
 ;; (do
 ;;   (println (apply str (repeat 80 "-")))
-;;   (s/def ::animal2 ::animal)
-;;   (println (explain-str ::animal2 "a"))
+;;   (s/def :exoscale.lingo/animal2 :exoscale.lingo/animal)
+;;   (println (explain-str :exoscale.lingo/animal2 "a"))
 ;;   (println))
 
 ;; (do
 ;;   (println (apply str (repeat 80 "-")))
-;;   (s/def ::animal2 ::animal)
+;;   (s/def :exoscale.lingo/animal2 :exoscale.lingo/animal)
 ;;   (println (explain-str int? "1"))
 ;;   (println))

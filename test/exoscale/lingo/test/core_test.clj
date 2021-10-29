@@ -61,7 +61,6 @@
     {:age 10 :person {:names [1]}}
     "1 is invalid: should match String in: [:person :names 0] - spec: :foo/name\n"
 
-
     (-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
         (xs/with-meta! {::name "Agent"}))
     {:age ""}
