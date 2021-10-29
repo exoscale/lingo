@@ -1,5 +1,7 @@
 (ns exoscale.lingo
   (:require [clojure.spec.alpha :as s]
+            exoscale.specs.string
+            exoscale.specs.net
             [exoscale.specs :as xs]
             [clojure.walk :as walk]
             clojure.string
@@ -47,7 +49,7 @@
   [spec]
   (if-let [sn (spec-name spec)]
     (format " - spec: %s (%s)" (pr-str spec) sn)
-    (str " - spec: " (pr-str spec))))
+    (format " - spec: %s" (pr-str spec))))
 
 (defn strip-core
   [sym]
@@ -126,6 +128,7 @@
     [(not (Double/isNaN %)) "cannot be NaN"]
     [(not (Double/isInfinite %)) "cannot be Infinite"]
 
+    ;; exo specs
     [(exoscale.specs.string/string-of* % ?pt)
      (with-out-str
        (print "should be a String ")
@@ -141,7 +144,13 @@
                                        length
                                        (conj (format "exactly %d characters in length" length))
                                        rx
-                                       (conj (format "matching the regex %s" rx)))))))]])
+                                       (conj (format "matching the regex %s" rx)))))))]
+
+    [(.isValidInet4Address exoscale.specs.net/validator %)
+     "Incorrect IPV4"]
+
+    [(.isValidInet6Address exoscale.specs.net/validator %)
+     "Incorrect IPV6"]])
 
 (defn make-pred-matcher [ptns]
   ;; we could try to do this via a macro instead of using eval
@@ -256,77 +265,77 @@
 ;; playground
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(comment
+;; (comment
 
-  (defn space
-    []
-    (println)
-    (println)
-    (println (apply str (repeat 80 "-")))
-    (println))
+;; (defn space
+;;   []
+;;   (println)
+;;   (println)
+;;   (println (apply str (repeat 80 "-")))
+;;   (println))
 
 
-  ;; (do
-  ;;   (space)
-  ;;   (explain #{:a :b :c} "b"))
+;; (do
+;;   (space)
+;;   (explain #{:a :b :c} "b"))
 
-  (do
-    (space)
-    ;; (def-pred-matcher! '(pos? (count %)) "should be non blank")
-    (explain (s/and string? #(pos? (count %))) ""))
+;; (do
+;;   (space)
+;;   ;; (def-pred-matcher! '(pos? (count %)) "should be non blank")
+;;   (explain (s/and string? #(pos? (count %))) ""))
 
-  (do
-    (space)
-    (def-pred-matcher '(pos? (count %)) "should be non blank")
-    (explain (s/and string? #(pos? (count %))) ""))
+;; (do
+;;   (space)
+;;   (def-pred-matcher '(pos? (count %)) "should be non blank")
+;;   (explain (s/and string? #(pos? (count %))) ""))
 
-  (require '[exoscale.specs.string :as xss])
-  (do
-    (space)
-    (explain (s/and string? #(xss/string-of* % {:blank? false :min-length 3 :max-length 10})) ""))
+;; (require '[exoscale.specs.string :as xss])
+;; (do
+;;   (space)
+;;   (explain (s/and string? #(xss/string-of* % {:blank? false :min-length 3 :max-length 10})) ""))
 
-  ;;   (space)
-  ;;   (explain (s/and string? something?) ""))
+;; ;;   (space)
+;; ;;   (explain (s/and string? something?) ""))
 
-  (do
-    (space)
-    (explain zero? 1))
+;; (do
+;;   (space)
+;;   (explain zero? 1))
 
-  (do
-    (space)
-    (s/def :exoscale.lingo/c1 (s/map-of int? int? :count 3))
-    (explain :exoscale.lingo/c1 {"a" "b"}))
+;; (do
+;;   (space)
+;;   (s/def :exoscale.lingo/c1 (s/map-of int? int? :count 3))
+;;   (explain :exoscale.lingo/c1 {"a" "b"}))
 
-  (do
-    (space)
-    (s/def :exoscale.lingo/c1 neg-int?)
-    (explain :exoscale.lingo/c1 [1 1]))
+;; (do
+;;   (space)
+;;   (s/def :exoscale.lingo/c1 neg-int?)
+;;   (explain :exoscale.lingo/c1 [1 1]))
 
-  (do
-    (space)
-    (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
-    (explain :foo/agent {:age 10}))
+;; (do
+;;   (space)
+;;   (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
+;;   (explain :foo/agent {:age 10}))
 
-  (do
-    (space)
-    (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
-    (explain :foo/agent {:age 10 :person {:names [1]}}))
+;; (do
+;;   (space)
+;;   (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
+;;   (explain :foo/agent {:age 10 :person {:names [1]}}))
 
-  (do
-    (space)
-    (explain :foo/agent2 {:age ""}))
+;; (do
+;;   (space)
+;;   (explain :foo/agent2 {:age ""}))
 
-  (do
-    (space)
-    (s/def :foo/animal #{:a :b :c})
-    (explain :foo/animal 1))
+;; (do
+;;   (space)
+;;   (s/def :foo/animal #{:a :b :c})
+;;   (explain :foo/animal 1))
 
-  (do
-    (space)
-    (explain-str :foo/person {:names [1 :yolo]}))
+;; (do
+;;   (space)
+;;   (explain-str :foo/person {:names [1 :yolo]}))
 
-  (do
-    (explain nil? 1)))
+;; (do
+;;   (explain nil? 1)))
 
 ;; (explain (s/coll-of any? :max-count 3 :min-count 2) [1 2 3 4])
 ;; (require '[exoscale.specs.string :as xss])
@@ -370,3 +379,4 @@
 ;;   (s/def :exoscale.lingo/animal2 :exoscale.lingo/animal)
 ;;   (println (explain-str int? "1"))
 ;;   (println))
+;; (explain :exoscale.specs.net/url "")
