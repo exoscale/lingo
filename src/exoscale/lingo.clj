@@ -81,9 +81,10 @@
              ?min-count ?max-count)]
 
     [(= 1 (count %))
-     (format "should contain only 1 element")]
+     (format "should contain exactly 1 element")]
 
-    [(= ?count (count %))
+    [(meander.epsilon/or (= ?count (count %))
+                         (= (count %) ?count))
      (format "should contain exactly %s elements"
              ?count)]
 
@@ -96,11 +97,11 @@
              ?count)]
 
     [(>= (count %) ?count)
-     (format "should contain more or exactly %s elements"
+     (format "should contain at least %s elements"
              ?count)]
 
     [(<= (count %) ?count)
-     (format "should contain less or exaclty %s elements"
+     (format "should contain at most %s elements"
              ?count)]
 
     ;; int-in

@@ -49,34 +49,41 @@
     {"a" "b"}
     "{\"a\" \"b\"} is invalid: should contain exactly 3 elements - spec: :exoscale.lingo/c1\n"
 
-    neg-int?
-    [1]
-    "[1] is invalid: should match Negative Integer\n"
+    (s/and any? #(= 1 (count %)))
+    []
+    "[] is invalid: should contain exactly 1 element\n"
 
-    (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
-    {:age 10}
-    "{:age 10} is invalid: missing key :person - spec: :foo/agent\n"
+    (s/and any? #(= 42 (count %)))
+    []
+    "[] is invalid: should contain exactly 42 elements\n"
 
-    (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
-    {:age 10 :person {:names [1]}}
-    "1 is invalid: should match String in: [:person :names 0] - spec: :foo/name\n"
+    (s/and any? #(= (count %) 42))
+    []
+    "[] is invalid: should contain exactly 42 elements\n"
 
-    (-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
-        (xs/with-meta! {::name "Agent"}))
-    {:age ""}
-    "\"\" is invalid: should match Integer in: [:age] - spec: :foo/age\n{:age \"\"} is invalid: missing key :person - spec: :foo/agent2\n"
+    (s/and any? #(>= (count %) 42))
+    []
+    "[] is invalid: should contain at least 42 elements\n"
 
-    (s/def :foo/animal #{:a :b :c})
-    1
-    "1 is invalid: should be one of :a,:b,:c - spec: :foo/animal\n"
+    (s/and any? #(<= (count %) 1))
+    [1 1]
+    "[1 1] is invalid: should contain at most 1 elements\n"
 
-    :foo/person
-    {:names [1 :yolo]}
-    "1 is invalid: should match String in: [:names 0] - spec: :foo/name\n:yolo is invalid: should match String in: [:names 1] - spec: :foo/name\n"
+    (s/and any? #(<= % 1))
+    10
+    "10 is invalid: should be smaller or equal than 1\n"
 
-    nil?
-    1
-    "1 is invalid: should match nil\n"
+    (s/and any? #(< % 1))
+    10
+    "10 is invalid: should be smaller than 1\n"
+
+    (s/and any? #(>= % 1))
+    0
+    "0 is invalid: should be greater or equal than 1\n"
+
+    (s/and any? #(> % 1))
+    0
+    "0 is invalid: should be greater than 1\n"
 
     (s/int-in 0 10)
     -1
@@ -108,7 +115,7 @@
 
     (s/coll-of any? :count 1)
     [1 1 1 1]
-    "[1 1 1 1] is invalid: should contain only 1 element\n"
+    "[1 1 1 1] is invalid: should contain exactly 1 element\n"
 
     (s/coll-of any? :kind set?)
     [1]
@@ -116,4 +123,41 @@
 
     (s/map-of any? any? :count 1)
     {:a 1 :b 2}
-    "{:a 1, :b 2} is invalid: should contain only 1 element\n"))
+    "{:a 1, :b 2} is invalid: should contain exactly 1 element\n"
+
+    neg-int?
+    [1]
+    "[1] is invalid: should match Negative Integer\n"
+
+    (s/double-in :NaN? false)
+    ##NaN
+    "##NaN is invalid: cannot be NaN\n"
+
+    (s/double-in :infinite? false)
+    ##Inf
+    "##Inf is invalid: cannot be Infinite\n"
+
+    (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
+    {:age 10}
+    "{:age 10} is invalid: missing key :person - spec: :foo/agent\n"
+
+    (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
+    {:age 10 :person {:names [1]}}
+    "1 is invalid: should match String in: [:person :names 0] - spec: :foo/name\n"
+
+    (-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
+        (xs/with-meta! {::name "Agent"}))
+    {:age ""}
+    "\"\" is invalid: should match Integer in: [:age] - spec: :foo/age\n{:age \"\"} is invalid: missing key :person - spec: :foo/agent2\n"
+
+    (s/def :foo/animal #{:a :b :c})
+    1
+    "1 is invalid: should be one of :a,:b,:c - spec: :foo/animal\n"
+
+    :foo/person
+    {:names [1 :yolo]}
+    "1 is invalid: should match String in: [:names 0] - spec: :foo/name\n:yolo is invalid: should match String in: [:names 1] - spec: :foo/name\n"
+
+    nil?
+    1
+    "1 is invalid: should match nil\n"))
