@@ -2,7 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [exoscale.specs :as xs]
             [clojure.walk :as walk]
-            [clojure.string :as str]
+            clojure.string
             [meander.epsilon :as m]))
 
 ;; set defaults for common idents
@@ -57,12 +57,12 @@
   '[[(contains? % ?key)
      (format "missing key %s" ?key)]
 
-    [(m/pred set? ?set)
-     (format "should be one of %s" (str/join "," (sort ?set)))]
+    [(meander.epsilon/pred set? ?set)
+     (format "should be one of %s" (clojure.string/join "," (sort ?set)))]
 
-    [(m/pred ident? ?id)
-     (format "should match %s" (or (spec-name ?id)
-                                   (strip-core ?id)))]
+    [(meander.epsilon/pred ident? ?id)
+     (format "should match %s" (or (exoscale.lingo/spec-name ?id)
+                                   (exoscale.lingo/strip-core ?id)))]
 
     ;; `every` (coll-of, etc...) :min-count, :max-count, :count
     [(<= ?min-count (count %) ?max-count)
@@ -99,18 +99,18 @@
      (with-out-str
        (print "should be a String ")
        (let [{:keys [length min-length max-length blank? rx]} ?pt]
-         (print (str/join ", "
-                          (cond-> []
-                            (false? blank?)
-                            (conj "non blank")
-                            min-length
-                            (conj (format "at least %d characters in length" min-length))
-                            max-length
-                            (conj (format "at most %d characters in length" max-length))
-                            length
-                            (conj (format "exactly %d characters in length" length))
-                            rx
-                            (conj (format "matching the regex %s" rx)))))))]])
+         (print (clojure.string/join ", "
+                                     (cond-> []
+                                       (false? blank?)
+                                       (conj "non blank")
+                                       min-length
+                                       (conj (format "at least %d characters in length" min-length))
+                                       max-length
+                                       (conj (format "at most %d characters in length" max-length))
+                                       length
+                                       (conj (format "exactly %d characters in length" length))
+                                       rx
+                                       (conj (format "matching the regex %s" rx)))))))]])
 
 (defn make-pred-matcher [ptns]
   ;; we could try to do this via a macro instead of using eval
@@ -157,7 +157,7 @@
   (pred-matcher (abbrev pred)))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
-(defmacro add-pred-matcher!
+(defmacro def-pred-matcher
   [ptn-in ptn-out]
   `(let [ptn-in# ~ptn-in
          ptn-out# ~ptn-out
@@ -241,12 +241,12 @@
 
   (do
     (space)
-    ;; (add-pred-matcher! '(pos? (count %)) "should be non blank")
+    ;; (def-pred-matcher! '(pos? (count %)) "should be non blank")
     (explain (s/and string? #(pos? (count %))) ""))
 
   (do
     (space)
-    (add-pred-matcher! '(pos? (count %)) "should be non blank")
+    (def-pred-matcher '(pos? (count %)) "should be non blank")
     (explain (s/and string? #(pos? (count %))) ""))
 
   (require '[exoscale.specs.string :as xss])

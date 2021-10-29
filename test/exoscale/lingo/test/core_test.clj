@@ -21,7 +21,15 @@
 
 (deftest test-outputs
   (are [spec val output] (= (l/explain-str spec val) output)
+    ;; test the original unchanged msg
     (s/and string? #(pos? (count %)))
+    ""
+    "\"\" is invalid: (pos? (count %))\n"
+
+    ;; with a custom pred matcher
+    (do
+      (l/def-pred-matcher '(pos? (count %)) "should be non blank")
+      (s/and string? #(pos? (count %))))
     ""
     "\"\" is invalid: should be non blank\n"
 
