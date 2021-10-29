@@ -5,19 +5,25 @@
             [exoscale.specs.string :as xss]
             [clojure.spec.alpha :as s]))
 
+(defn f2? [x] false)
+(defn f3? [x] false)
+
+(l/def-pred-matcher 'exoscale.lingo.test.core-test/f2? "yolo")
+(xs/with-meta! `f3? {:exoscale.lingo/name "Something"})
+
 (-> (s/def :foo/name string?)
-    (xs/with-meta! {::name "Entity Name"}))
+    (xs/with-meta! {:exoscale.lingo/name "Entity Name"}))
 
 (s/def :foo/names (s/coll-of :foo/name))
 
 (-> (s/def :foo/person (s/keys :req-un [:foo/names]))
-    (xs/with-meta! {::name "Person"}))
+    (xs/with-meta! {:exoscale.lingo/name "Person"}))
 
 (s/def :foo/age int?)
 (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
 
 (-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
-    (xs/with-meta! {::name "Agent"}))
+    (xs/with-meta! {:exoscale.lingo/name "Agent"}))
 
 (deftest test-outputs
   (are [spec val output] (= (l/explain-str spec val) output)
@@ -155,12 +161,12 @@
 
     (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
     {:age 10 :person {:names [1]}}
-    "1 is invalid: should match String in: [:person :names 0] - spec: :foo/name\n"
+    "1 is invalid: should match String in: [:person :names 0] - spec: :foo/name (Entity Name)\n"
 
     (-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
-        (xs/with-meta! {::name "Agent"}))
+        (xs/with-meta! {:exoscale.lingo/name "Agent"}))
     {:age ""}
-    "\"\" is invalid: should match Integer in: [:age] - spec: :foo/age\n{:age \"\"} is invalid: missing key :person - spec: :foo/agent2\n"
+    "\"\" is invalid: should match Integer in: [:age] - spec: :foo/age\n{:age \"\"} is invalid: missing key :person - spec: :foo/agent2 (Agent)\n"
 
     (s/def :foo/animal #{:a :b :c})
     1
@@ -168,15 +174,17 @@
 
     :foo/person
     {:names [1 :yolo]}
-    "1 is invalid: should match String in: [:names 0] - spec: :foo/name\n:yolo is invalid: should match String in: [:names 1] - spec: :foo/name\n"
+    "1 is invalid: should match String in: [:names 0] - spec: :foo/name (Entity Name)\n:yolo is invalid: should match String in: [:names 1] - spec: :foo/name (Entity Name)\n"
 
     nil?
     1
     "1 is invalid: should match nil\n"
 
-    ;; (do
-    ;;   (defn f2? [x])
-    ;;   (xs/with-meta! `f2? {::name "yolo"}))
-    ;; 1
-    ;; "1 is invalid: should match yolo"
+    f2?
+    1
+    "1 is invalid: yolo\n"
+
+    f3?
+    1
+    "1 is invalid: should match Something\n"
     ))
