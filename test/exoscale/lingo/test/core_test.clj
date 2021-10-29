@@ -186,5 +186,4 @@
 
     f3?
     1
-    "1 is invalid: should match Something\n"
-    ))
+    "1 is invalid: should match Something\n"))
