@@ -53,6 +53,10 @@
     []
     "[] is invalid: should contain exactly 1 element\n"
 
+    (s/and any? #(= (count %) 1))
+    []
+    "[] is invalid: should contain exactly 1 element\n"
+
     (s/and any? #(= 42 (count %)))
     []
     "[] is invalid: should contain exactly 42 elements\n"
@@ -84,6 +88,14 @@
     (s/and any? #(> % 1))
     0
     "0 is invalid: should be greater than 1\n"
+
+    (s/and any? #(= % "yolo"))
+    0
+    "0 is invalid: should be equal to yolo\n"
+
+    (s/and any? #(= "yolo" %))
+    0
+    "0 is invalid: should be equal to yolo\n"
 
     (s/int-in 0 10)
     -1

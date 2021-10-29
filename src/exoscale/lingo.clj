@@ -80,11 +80,14 @@
      (format "should contain between %s %s elements"
              ?min-count ?max-count)]
 
-    [(= 1 (count %))
+    [(meander.epsilon/or
+      (= 1 (count %))
+      (= (count %) 1))
      (format "should contain exactly 1 element")]
 
-    [(meander.epsilon/or (= ?count (count %))
-                         (= (count %) ?count))
+    [(meander.epsilon/or
+      (= ?count (count %))
+      (= (count %) ?count))
      (format "should contain exactly %s elements"
              ?count)]
 
@@ -116,8 +119,8 @@
     [(>= % ?n) (format "should be greater or equal than %d" ?n)]
     [(> % ?n) (format "should be greater than %d" ?n)]
 
-    [(= % ?x) (format "should be equal to %s" ?x)]
-    [(not= % ?x) (format "should not be equal to %s" ?x)]
+    [(meander.epsilon/or (= % ?x) (= ?x %)) (format "should be equal to %s" ?x)]
+    [(meander.epsilon/or (not= ?x %) (not= % ?x)) (format "should not be equal to %s" ?x)]
 
     ;; double
     [(not (Double/isNaN %)) "cannot be NaN"]
