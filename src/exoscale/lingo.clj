@@ -5,6 +5,38 @@
             [clojure.string :as str]
             [meander.epsilon :as m]))
 
+;; set defaults for common idents
+
+(xs/with-meta! `string? {::name "String"})
+(xs/with-meta! `char? {::name "Character"})
+(xs/with-meta! `map? {::name "Map"})
+(xs/with-meta! `coll? {::name "Collection"})
+(xs/with-meta! `set? {::name "Set"})
+(xs/with-meta! `vector? {::name "Vector"})
+(xs/with-meta! `associative? {::name "Associative (map, vector)"})
+(xs/with-meta! `sequential? {::name "Sequential"})
+(xs/with-meta! `number? {::name "Number"})
+(xs/with-meta! `bytes? {::name "Bytes"})
+(xs/with-meta! `float? {::name "Float"})
+(xs/with-meta! `double? {::name "Double"})
+(xs/with-meta! `boolean? {::name "Boolean"})
+(xs/with-meta! `true? {::name "true"})
+(xs/with-meta! `false? {::name "false"})
+(xs/with-meta! `zero? {::name "Zero"})
+(xs/with-meta! `empty? {::name "Empty"})
+(xs/with-meta! `ident? {::name "Identifier (keyword or symbol)"})
+(xs/with-meta! `qualified-ident? {::name "Qualified Identifier (keyword or symbol)"})
+(xs/with-meta! `symbol? {::name "Symbol"})
+(xs/with-meta! `uuid? {::name "UUID"})
+(xs/with-meta! `uri? {::name "URI"})
+(xs/with-meta! `int? {::name "Integer"})
+(xs/with-meta! `nat-int? {::name "Integer"})
+(xs/with-meta! `pos-int? {::name "Positive Integer"})
+(xs/with-meta! `neg-int? {::name "Negative Integer"})
+(xs/with-meta! `inst? {::name "Instant"})
+(xs/with-meta! `some? {::name "Non-nil"})
+(xs/with-meta! `nil? {::name "nil"})
+
 (defn spec-name
   [spec]
   (get (xs/meta spec) ::name))
@@ -12,8 +44,8 @@
 (defn spec-str
   [spec]
   (if-let [sn (spec-name spec)]
-    (format " spec: %s (%s)" (pr-str spec) sn)
-    (str " spec: " (pr-str spec))))
+    (format " - spec: %s (%s)" (pr-str spec) sn)
+    (str " - spec: " (pr-str spec))))
 
 (defn strip-core
   [sym]
@@ -23,25 +55,25 @@
 
 (def ^:dynamic *pred-matchers*
   '[[(contains? % ?key)
-     (format "`missing key %s`" ?key)]
+     (format "missing key %s" ?key)]
 
     [(m/pred set? ?set)
-     (format "`should be one of %s`" (str/join "," (sort ?set)))]
+     (format "should be one of %s" (str/join "," (sort ?set)))]
 
     [(m/pred ident? ?id)
-     (format "`should match %s`" (or (spec-name ?id)
-                                     (strip-core ?id)))]
+     (format "should match %s" (or (spec-name ?id)
+                                   (strip-core ?id)))]
 
     ;; `every` (coll-of, etc...) :min-count, :max-count, :count
     [(<= ?min-count (count %) ?max-count)
-     (format "`should contain between %s %s elements`"
+     (format "should contain between %s %s elements"
              ?min-count ?max-count)]
 
     [(= 1 (count %))
-     (format "`should contain only 1 element`")]
+     (format "should contain only 1 element")]
 
     [(= ?count (count %))
-     (format "`should contain exactly %s elements`"
+     (format "should contain exactly %s elements"
              ?count)]
 
     ;; int-in
@@ -49,15 +81,19 @@
      (format "should be an Integer between %s %s"
              ?min ?max)]
 
-    ;; double-in
-    [(clojure.spec.alpha/double-in-range? ?min ?max %)
-     (format "should be a Double between %s %s"
-             ?min ?max)]
+    ;; double-in and other are bound be these
+    [(<= % ?n) (format "should be smaller or equal than %d" ?n)]
+    [(< % ?n) (format "should be smaller than %d" ?n)]
 
-    ;; ;; double-in
-    ;; [(clojure.spec.alpha/inst-in-range? ?min ?max %)
-    ;;  (format "should be an Inst between %s %s"
-    ;;          ?min ?max)]
+    [(>= % ?n) (format "should be greater or equal than %d" ?n)]
+    [(> % ?n) (format "should be greater than %d" ?n)]
+
+    [(= % ?x) (format "should be equal to %s" ?x)]
+    [(not= % ?x) (format "should not be equal to %s" ?x)]
+
+    ;; double
+    [(not (Double/isNaN %)) "cannot be NaN"]
+    [(not (Double/isInfinite %)) "cannot be Infinite"]
 
     [(exoscale.specs.string/string-of* % ?pt)
      (with-out-str
@@ -77,6 +113,8 @@
                             (conj (format "matching the regex %s" rx)))))))]])
 
 (defn make-pred-matcher [ptns]
+  ;; we could try to do this via a macro instead of using eval
+  ;; to be revisited once/if we want to use this with cljs
   (eval `(fn [x#]
            (try
              (m/match x# ~@(apply concat ptns))
@@ -118,6 +156,7 @@
   [pred pred-matcher]
   (pred-matcher (abbrev pred)))
 
+#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defmacro add-pred-matcher!
   [ptn-in ptn-out]
   `(let [ptn-in# ~ptn-in
@@ -182,128 +221,81 @@
   (binding [s/*explain-out* explain-printer]
     (s/explain spec x)))
 
-;; set defaults for common idents
-
-(xs/with-meta! `string? {::name "String"})
-(xs/with-meta! `char? {::name "Character"})
-(xs/with-meta! `map? {::name "Map"})
-(xs/with-meta! `coll? {::name "Collection"})
-(xs/with-meta! `set? {::name "Set"})
-(xs/with-meta! `vector? {::name "Vector"})
-(xs/with-meta! `associative? {::name "Associative (map, vector)"})
-(xs/with-meta! `sequential? {::name "Sequential"})
-(xs/with-meta! `number? {::name "Number"})
-(xs/with-meta! `bytes? {::name "Bytes"})
-(xs/with-meta! `float? {::name "Float"})
-(xs/with-meta! `double? {::name "Double"})
-(xs/with-meta! `boolean? {::name "Boolean"})
-(xs/with-meta! `true? {::name "true"})
-(xs/with-meta! `false? {::name "true"})
-(xs/with-meta! `zero? {::name "Zero"})
-(xs/with-meta! `empty? {::name "Empty"})
-(xs/with-meta! `ident? {::name "Identifier (keyword or symbol)"})
-(xs/with-meta! `qualified-ident? {::name "Qualified Identifier (keyword or symbol)"})
-(xs/with-meta! `symbol? {::name "Symbol"})
-(xs/with-meta! `uuid? {::name "UUID"})
-(xs/with-meta! `uri? {::name "URI"})
-(xs/with-meta! `int? {::name "Integer"})
-(xs/with-meta! `nat-int? {::name "Integer"})
-(xs/with-meta! `pos-int? {::name "Positive Integer"})
-(xs/with-meta! `neg-int? {::name "Negative Integer"})
-(xs/with-meta! `inst? {::name "Instant"})
-(xs/with-meta! `some? {::name "Non-nil"})
-(xs/with-meta! `nil? {::name "nil"})
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; playground
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(comment
+
+  (defn space
+    []
+    (println)
+    (println)
+    (println (apply str (repeat 80 "-")))
+    (println))
 
 
-(-> (s/def :foo/name string?)
-    (xs/with-meta! {::name "Entity Name"}))
+  ;; (do
+  ;;   (space)
+  ;;   (explain #{:a :b :c} "b"))
 
-(s/def :foo/names (s/coll-of :foo/name))
+  (do
+    (space)
+    ;; (add-pred-matcher! '(pos? (count %)) "should be non blank")
+    (explain (s/and string? #(pos? (count %))) ""))
 
-(-> (s/def :foo/person (s/keys :req-un [:foo/names]))
-    (xs/with-meta! {::name "Person"}))
+  (do
+    (space)
+    (add-pred-matcher! '(pos? (count %)) "should be non blank")
+    (explain (s/and string? #(pos? (count %))) ""))
 
-(s/def :foo/age int?)
-(s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
+  (require '[exoscale.specs.string :as xss])
+  (do
+    (space)
+    (explain (s/and string? #(xss/string-of* % {:blank? false :min-length 3 :max-length 10})) ""))
 
-(-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
-    (xs/with-meta! {::name "Agent"}))
+  ;;   (space)
+  ;;   (explain (s/and string? something?) ""))
 
-(defn space
-  []
-  (println)
-  (println)
-  (println (apply str (repeat 80 "-")))
-  (println))
+  (do
+    (space)
+    (explain zero? 1))
 
-;; (binding [s/*explain-out* explain-printer]
-;;   (space)
-;;   (s/explain #{:a :b :c} "b"))
+  (do
+    (space)
+    (s/def ::c1 (s/map-of int? int? :count 3))
+    (explain ::c1 {"a" "b"}))
 
-;; *pred-matcher*
+  (do
+    (space)
+    (s/def ::c1 neg-int?)
+    (explain ::c1 [1 1]))
 
-(do
-  (space)
-  ;; (add-pred-matcher! '(pos? (count %)) "should be non blank")
-  (explain (s/and string? #(pos? (count %))) ""))
+  (do
+    (space)
+    (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
+    (explain :foo/agent {:age 10}))
 
-(do
-  (space)
-  (add-pred-matcher! '(pos? (count %)) "should be non blank")
-  (explain (s/and string? #(pos? (count %))) ""))
+  (do
+    (space)
+    (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
+    (explain :foo/agent {:age 10 :person {:names [1]}}))
 
-(require '[exoscale.specs.string :as xss])
-(do
-  (space)
-  (explain (s/and string? #(xss/string-of* % {:blank? false :min-length 3 :max-length 10})) ""))
+  (do
+    (space)
+    (explain :foo/agent2 {:age ""}))
 
-;;   (space)
-;;   (explain (s/and string? something?) ""))
+  (do
+    (space)
+    (s/def :foo/animal #{:a :b :c})
+    (explain :foo/animal 1))
 
-(do
-  (space)
-  (explain zero? 1))
+  (do
+    (space)
+    (explain-str :foo/person {:names [1 :yolo]}))
 
-(do
-  (space)
-  (s/def ::c1 (s/map-of int? int? :count 3))
-  (explain ::c1 {"a" "b"}))
-
-(do
-  (space)
-  (s/def ::c1 neg-int?)
-  (explain ::c1 [1 1]))
-
-(do
-  (space)
-  (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
-  (explain :foo/agent {:age 10}))
-
-(do
-  (space)
-  (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
-  (explain :foo/agent {:age 10 :person {:names [1]}}))
-
-(do
-  (space)
-  (explain :foo/agent2 {:age ""}))
-
-(do
-  (space)
-  (s/def :foo/animal #{:a :b :c})
-  (explain :foo/animal 1))
-
-(do
-  (space)
-  (explain :foo/person {:names [1 :yolo]}))
-
-(do
-  (explain nil? 1))
+  (do
+    (explain nil? 1)))
 
 ;; (require '[exoscale.specs.string :as xss])
 
@@ -346,3 +338,4 @@
 ;;   (s/def ::animal2 ::animal)
 ;;   (println (explain-str int? "1"))
 ;;   (println))
+(explain (s/double-in :min 0 :max 10) (double 11))
