@@ -76,6 +76,22 @@
      (format "should contain exactly %s elements"
              ?count)]
 
+    [(> (count %) ?count)
+     (format "should contain more than %s elements"
+             ?count)]
+
+    [(< (count %) ?count)
+     (format "should contain less than %s elements"
+             ?count)]
+
+    [(>= (count %) ?count)
+     (format "should contain more or exactly %s elements"
+             ?count)]
+
+    [(<= (count %) ?count)
+     (format "should contain less or exaclty %s elements"
+             ?count)]
+
     ;; int-in
     [(clojure.spec.alpha/int-in-range? ?min ?max %)
      (format "should be an Integer between %s %s"

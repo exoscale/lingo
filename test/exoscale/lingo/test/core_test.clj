@@ -21,6 +21,11 @@
 
 (deftest test-outputs
   (are [spec val output] (= (l/explain-str spec val) output)
+
+    (s/and string? #(> (count %) 3))
+    ""
+    "\"\" is invalid: should contain more than 3 elements\n"
+
     ;; test the original unchanged msg
     (s/and string? #(pos? (count %)))
     ""
