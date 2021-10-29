@@ -140,20 +140,42 @@
   (binding [s/*explain-out* explain-printer]
     (s/explain spec x)))
 
+;; set defaults for common preds
+
+(xs/with-meta! `string? {::name "String"})
+(xs/with-meta! `char? {::name "Character"})
+(xs/with-meta! `map? {::name "Map"})
+(xs/with-meta! `coll? {::name "Collection"})
+(xs/with-meta! `set? {::name "Set"})
+(xs/with-meta! `vector? {::name "Vector"})
+(xs/with-meta! `associative? {::name "Associative (map, vector)"})
+(xs/with-meta! `sequential? {::name "Sequential"})
+(xs/with-meta! `number? {::name "Number"})
+(xs/with-meta! `bytes? {::name "Bytes"})
+(xs/with-meta! `float? {::name "Float"})
+(xs/with-meta! `double? {::name "Double"})
+(xs/with-meta! `boolean? {::name "Boolean"})
+(xs/with-meta! `true? {::name "true"})
+(xs/with-meta! `false? {::name "true"})
+(xs/with-meta! `zero? {::name "Zero"})
+(xs/with-meta! `empty? {::name "Empty"})
+(xs/with-meta! `ident? {::name "Identifier (keyword or symbol)"})
+(xs/with-meta! `qualified-ident? {::name "Qualified Identifier (keyword or symbol)"})
+(xs/with-meta! `symbol? {::name "Symbol"})
+(xs/with-meta! `uuid? {::name "UUID"})
+(xs/with-meta! `uri? {::name "URI"})
+(xs/with-meta! `int? {::name "Integer"})
+(xs/with-meta! `nat-int? {::name "Integer"})
+(xs/with-meta! `pos-int? {::name "Positive Integer"})
+(xs/with-meta! `neg-int? {::name "Negative Integer"})
+(xs/with-meta! `inst? {::name "Instant"})
+(xs/with-meta! `some? {::name "Non-nil"})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; playground
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(xs/with-meta! `string? {::name "String"})
-(xs/with-meta! `map? {::name "Map"})
-(xs/with-meta! `coll? {::name "Collection"})
-(xs/with-meta! `set? {::name "Set"})
-(xs/with-meta! `number? {::name "Number"})
-(xs/with-meta! `int? {::name "Integer"})
-(xs/with-meta! `nat-int? {::name "Integer"})
-(xs/with-meta! `pos-int? {::name "Positive Integer"})
-(xs/with-meta! `inst? {::name "Instant"})
+
 
 (-> (s/def :foo/name string?)
     (xs/with-meta! {::name "Entity Name"}))
@@ -205,7 +227,7 @@
 
 (do
   (space)
-  (explain coll? 1))
+  (explain zero? 1))
 
 (do
   (space)
