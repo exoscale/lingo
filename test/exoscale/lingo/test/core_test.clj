@@ -45,6 +45,10 @@
     [1]
     "1 is invalid: thing should be a string with bla bla bla in: [0] - spec: :exoscale.lingo.test.core-test/thing\n"
 
+    ::things
+    1
+    "1 is invalid: should match Collection - spec: :exoscale.lingo.test.core-test/things\n"
+
     (s/and string? #(> (count %) 3))
     ""
     "\"\" is invalid: should contain more than 3 elements\n"
