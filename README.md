@@ -9,6 +9,7 @@ additions
 ## Documentation
 
 * leverage `exoscale.specs` metatada to display better error messages
+  (spec name **and** full error message)
 * infer from anonymous explain :pred forms decent messages (with
   pattern matching on form via meander)
 * provide improved default explain for missing keys, sets/enums, most
