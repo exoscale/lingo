@@ -237,6 +237,7 @@
 
           reason
           (print reason)
+
           :else
           (print (pred-str pred pred-matcher)))
 

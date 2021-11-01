@@ -12,7 +12,7 @@
 (xs/with-meta! `f3? {:exoscale.lingo/name "Something"})
 
 (-> (s/def ::thing #(string? %))
-    (xs/with-meta! {:exoscale.lingo/error "thing should be a string with bla bla bla"}))
+    (xs/with-meta! {:exoscale.lingo/error "should be a string with bla bla bla"}))
 
 (s/def ::things (s/coll-of ::thing))
 
@@ -35,15 +35,15 @@
 
     ::thing
     1
-    "1 is an invalid :exoscale.lingo.test.core-test/thing: thing should be a string with bla bla bla\n"
+    "1 is an invalid :exoscale.lingo.test.core-test/thing: should be a string with bla bla bla\n"
 
     (s/coll-of ::thing)
     [1]
-    "1 is an invalid :exoscale.lingo.test.core-test/thing: thing should be a string with bla bla bla in: [0]\n"
+    "1 is an invalid :exoscale.lingo.test.core-test/thing: should be a string with bla bla bla in: [0]\n"
 
     ::things
     [1]
-    "1 is an invalid :exoscale.lingo.test.core-test/thing: thing should be a string with bla bla bla in: [0]\n"
+    "1 is an invalid :exoscale.lingo.test.core-test/thing: should be a string with bla bla bla in: [0]\n"
 
     ::things
     1
