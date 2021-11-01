@@ -2,10 +2,14 @@
   (:require [clojure.spec.alpha :as s]
             exoscale.specs.string
             exoscale.specs.net
+            [clojure.pprint :as pprint]
+            [clojure.string :as str]
             [exoscale.specs :as xs]
             [clojure.walk :as walk]
-            clojure.string
-            [meander.epsilon :as m]))
+            [meander.epsilon :as m]
+            [rewrite-clj.zip :as z]
+            [rewrite-clj.node.token :as ztoken]
+            [rewrite-clj.node :as znode]))
 
 ;; set defaults for common idents
 
@@ -206,12 +210,44 @@
      (alter-var-root #'*pred-matcher*
                      (fn [_#] (make-pred-matcher ptns#)))))
 
+(defn pp-str
+  [x]
+  (with-out-str (pprint/pprint x)))
+
+(defn- add-caret
+  [index len]
+  (str (apply str (repeat (dec index) " "))
+       (apply str (repeat len "^"))))
+
+(defn highlight
+  "Naive trick: replace with unique marker, get index pos and return value with ~~~~^
+  Could be improved with clj-rewrite eventually"
+  [value in val]
+  (when in
+    (let [zroot (z/of-string (pp-str value) {:track-position? true})
+          zloc (reduce (fn [zloc z]
+                         (z/get zloc z))
+                       zroot
+                       in)
+          col-index (-> (z/position-span zloc) first second)]
+      (-> zloc
+          (z/insert-newline-right)
+          (z/insert-right* (ztoken/->TokenNode "<highlight>"
+                                               (add-caret col-index (count (pr-str val)))))
+
+          (z/insert-newline-right)
+          (z/root-string)
+          print))))
+
+;; (prn-str (highlight {:a 1 :b 2 :c [{:d {:a 1 :b 2}}]} [:c 0 :d] {:a 1 :b 2}))
+
 (defn explain-printer
   "Custom printer for explain-data. nil indicates a successful validation."
   [{:as ed
-    :clojure.spec.alpha/keys [problems _spec]
-    :exoscale.lingo/keys [pred-matcher]
-    :or {pred-matcher *pred-matcher*}}]
+    :clojure.spec.alpha/keys [problems _spec value]
+    :exoscale.lingo/keys [pred-matcher highlight?]
+    :or {pred-matcher *pred-matcher*
+         highlight? false}}]
   (if ed
     (let [problems (->> problems
                         (sort-by #(- (count (:in %))))
@@ -219,6 +255,7 @@
       (doseq [{:keys [pred val reason via in _spec _path] :as prob} problems
               :let [err-message-override (some-> via last error-message)
                     spec (last via)]]
+
         (print (pr-str val))
 
         (when-not (empty? in)
@@ -251,7 +288,12 @@
             (print "\n\t" (pr-str k) " ")
             (pr v)))
 
-        (newline)))
+        (if highlight?
+          (do (newline)
+              (print (highlight value in val))
+              (newline)
+              (newline))
+          (newline))))
 
     (println "Success!")))
 
@@ -321,10 +363,12 @@
 ;;   (s/def :exoscale.lingo/c1 neg-int?)
 ;;   (explain :exoscale.lingo/c1 [1 1]))
 
-;; (do
-;;   (space)
-;;   (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
-;;   (explain :foo/agent {:age 10}))
+(do
+  (s/def :foo/agent (s/coll-of (s/keys :req-un [:foo/person :foo/age])))
+  (explain :foo/agent [{:age 10}]))
+
+(s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
+(explain :foo/agent {:age 10, :person {:names '(1)}})
 
 ;; (do
 ;;   (space)
