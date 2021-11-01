@@ -184,20 +184,13 @@
                          qs?
                          (strip-core form)
 
-                         ;; ;; not core
-                         ;; (and qs? (not core?))
-                         ;; form
-
                          (and (seq? form)
-                              (= 'fn (first form))
-                              ;; (= '[%] (second form))
-                              )
+                              (= 'fn (first form)))
                          (last form)
                          :else form))))))
 
 (defn pred-str
   [pred pred-matcher]
-  ;; (prn :abbrfev (abbrev pred))
   (pred-matcher (abbrev pred)))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
