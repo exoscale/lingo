@@ -45,6 +45,10 @@
   [spec]
   (get (xs/meta spec) :exoscale.lingo/name))
 
+(defn error-message
+  [spec]
+  (get (xs/meta spec) :exoscale.lingo/error))
+
 (defn spec-str
   [spec]
   (if-let [sn (spec-name spec)]
@@ -213,18 +217,25 @@
 (defn explain-printer
   "Custom printer for explain-data. nil indicates a successful validation."
   [{:as ed
-    :clojure.spec.alpha/keys [problems]
+    :clojure.spec.alpha/keys [problems spec]
     :exoscale.lingo/keys [pred-matcher]
     :or {pred-matcher *pred-matcher*}}]
   (if ed
     (let [problems (->> problems
                         (sort-by #(- (count (:in %))))
                         (sort-by #(- (count (:path %)))))]
-      (doseq [{:keys [_path pred val reason via in] :as prob} problems]
+      (doseq [{:keys [_path pred val reason via in spec] :as prob} problems
+              :let [err-message-override (some-> via last error-message)]]
         (print (pr-str val))
         (print " is invalid: ")
-        (if reason
+
+        (cond
+          (some? err-message-override)
+          (print err-message-override)
+
+          reason
           (print reason)
+          :else
           (print (pred-str pred pred-matcher)))
 
         (when-not (empty? in)
@@ -266,6 +277,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; (comment
+
 
 ;; (defn space
 ;;   []

@@ -11,6 +11,11 @@
 (l/def-pred-matcher 'exoscale.lingo.test.core-test/f2? "yolo")
 (xs/with-meta! `f3? {:exoscale.lingo/name "Something"})
 
+(-> (s/def ::thing #(string? %))
+    (xs/with-meta! {:exoscale.lingo/error "thing should be a string with bla bla bla"}))
+
+(s/def ::things (s/coll-of ::thing))
+
 (-> (s/def :foo/name string?)
     (xs/with-meta! {:exoscale.lingo/name "Entity Name"}))
 
@@ -27,6 +32,18 @@
 
 (deftest test-outputs
   (are [spec val output] (= (l/explain-str spec val) output)
+
+    ::thing
+    1
+    "1 is invalid: thing should be a string with bla bla bla - spec: :exoscale.lingo.test.core-test/thing\n"
+
+    (s/coll-of ::thing)
+    [1]
+    "1 is invalid: thing should be a string with bla bla bla in: [0] - spec: :exoscale.lingo.test.core-test/thing\n"
+
+    ::things
+    [1]
+    "1 is invalid: thing should be a string with bla bla bla in: [0] - spec: :exoscale.lingo.test.core-test/thing\n"
 
     (s/and string? #(> (count %) 3))
     ""
