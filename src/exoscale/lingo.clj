@@ -246,10 +246,11 @@
           (z/insert-newline-right)
           (z/insert-right* (ztoken/->TokenNode "<highlight>"
                                                (add-caret col-index (count (pr-str val)))))
-
+          ;; TODO we could add a check to see if the line goes to
+          ;; 80chars (limit) and only split into a newline if it's the
+          ;; case (handling deep ds vs thin)
           (z/insert-newline-right)
-          (z/root-string)
-          print))))
+          (z/root-string)))))
 
 ;; (prn-str (highlight {:a 1 :b 2 :c [{:d {:a 1 :b 2}}]} [:c 0 :d] {:a 1 :b 2}))
 
