@@ -220,12 +220,13 @@
               :let [err-message-override (some-> via last error-message)
                     spec (last via)]]
         (print (pr-str val))
-        (if spec
-          (print (format " is an invalid %s" (spec-str spec)))
-          (print " is invalid"))
 
         (when-not (empty? in)
           (print (format " in `%s`" (pr-str in))))
+
+        (if spec
+          (print (format " is an invalid %s" (spec-str spec)))
+          (print " is invalid"))
 
         (print " - ")
         (cond

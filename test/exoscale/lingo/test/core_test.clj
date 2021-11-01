@@ -39,11 +39,11 @@
 
     (s/coll-of ::thing)
     [1]
-    "1 is an invalid :exoscale.lingo.test.core-test/thing in `[0]` - should be a string with bla bla bla\n"
+    "1 in `[0]` is an invalid :exoscale.lingo.test.core-test/thing - should be a string with bla bla bla\n"
 
     ::things
     [1]
-    "1 is an invalid :exoscale.lingo.test.core-test/thing in `[0]` - should be a string with bla bla bla\n"
+    "1 in `[0]` is an invalid :exoscale.lingo.test.core-test/thing - should be a string with bla bla bla\n"
 
     ::things
     1
@@ -182,12 +182,12 @@
 
     (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
     {:age 10 :person {:names [1]}}
-    "1 is an invalid Entity Name in `[:person :names 0]` - should match String\n"
+    "1 in `[:person :names 0]` is an invalid Entity Name - should match String\n"
 
     (-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
         (xs/with-meta! {:exoscale.lingo/name "Agent"}))
     {:age ""}
-    "\"\" is an invalid :foo/age in `[:age]` - should match Integer\n{:age \"\"} is an invalid Agent - missing key :person\n"
+    "\"\" in `[:age]` is an invalid :foo/age - should match Integer\n{:age \"\"} is an invalid Agent - missing key :person\n"
 
     (s/def :foo/animal #{:a :b :c})
     1
@@ -195,7 +195,7 @@
 
     :foo/person
     {:names [1 :yolo]}
-    "1 is an invalid Entity Name in `[:names 0]` - should match String\n:yolo is an invalid Entity Name in `[:names 1]` - should match String\n"
+    "1 in `[:names 0]` is an invalid Entity Name - should match String\n:yolo in `[:names 1]` is an invalid Entity Name - should match String\n"
 
     nil?
     1
