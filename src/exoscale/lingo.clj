@@ -376,13 +376,13 @@
 ;;   (s/def :exoscale.lingo/c1 neg-int?)
 ;;   (explain :exoscale.lingo/c1 [1 1]))
 
-(do
-  (s/def :foo/agent (s/coll-of (s/keys :req-un [:foo/person :foo/age])))
-  (explain :foo/agent [{:age 10}]))
+;; (do
+;;   (s/def :foo/agent (s/coll-of (s/keys :req-un [:foo/person :foo/age])))
+;;   (explain :foo/agent [{:age 10}]))
 
-(s/def :foo/age #(< % 30))
-(s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
-(explain :foo/agent {:age 100, :person {:names '(1)}})
+;; (s/def :foo/age #(< % 30))
+;; (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
+;; (explain :foo/agent {:age 100, :person {:names '(1)}})
 
 ;; (do
 ;;   (space)
