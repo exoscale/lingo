@@ -9,26 +9,26 @@
 (defn f3? [x] false)
 
 (l/def-pred-matcher 'exoscale.lingo.test.core-test/f2? "yolo")
-(xs/with-meta! `f3? {:exoscale.lingo/name "Something"})
+(l/with-name! `f3? "Something")
 
 (-> (s/def ::thing #(string? %))
-    (xs/with-meta! {:exoscale.lingo/error "should be a string with bla bla bla"}))
+    (l/with-error! "should be a string with bla bla bla"))
 
 (s/def ::things (s/coll-of ::thing))
 
 (-> (s/def :foo/name string?)
-    (xs/with-meta! {:exoscale.lingo/name "Entity Name"}))
+    (l/with-name! "Entity Name"))
 
 (s/def :foo/names (s/coll-of :foo/name))
 
 (-> (s/def :foo/person (s/keys :req-un [:foo/names]))
-    (xs/with-meta! {:exoscale.lingo/name "Person"}))
+    (l/with-name! "Person"))
 
 (s/def :foo/age int?)
 (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
 
 (-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
-    (xs/with-meta! {:exoscale.lingo/name "Agent"}))
+    (l/with-name! "Agent"))
 
 (deftest test-outputs
   (are [spec val output] (= (l/explain-str spec val) output)

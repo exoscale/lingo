@@ -11,39 +11,51 @@
             [rewrite-clj.node.token :as ztoken]
             [rewrite-clj.node :as znode]))
 
+(defn with-name!
+  "Adds custom name to a spec"
+  [spec name]
+  (xs/vary-meta! spec
+                 assoc :exoscale.lingo/name name))
+
+(defn with-error!
+  "Adds custom error message for a spec"
+  [spec error-msg]
+  (xs/vary-meta! spec
+                 assoc :exoscale.lingo/error error-msg))
+
 ;; set defaults for common idents
 
-(xs/with-meta! `string? {:exoscale.lingo/name "String"})
-(xs/with-meta! `char? {:exoscale.lingo/name "Character"})
-(xs/with-meta! `map? {:exoscale.lingo/name "Map"})
-(xs/with-meta! `coll? {:exoscale.lingo/name "Collection"})
-(xs/with-meta! `set? {:exoscale.lingo/name "Set"})
-(xs/with-meta! `vector? {:exoscale.lingo/name "Vector"})
-(xs/with-meta! `associative? {:exoscale.lingo/name "Associative (map, vector)"})
-(xs/with-meta! `sequential? {:exoscale.lingo/name "Sequential"})
-(xs/with-meta! `number? {:exoscale.lingo/name "Number"})
-(xs/with-meta! `bytes? {:exoscale.lingo/name "Bytes"})
-(xs/with-meta! `float? {:exoscale.lingo/name "Float"})
-(xs/with-meta! `double? {:exoscale.lingo/name "Double"})
-(xs/with-meta! `boolean? {:exoscale.lingo/name "Boolean"})
-(xs/with-meta! `true? {:exoscale.lingo/name "true"})
-(xs/with-meta! `false? {:exoscale.lingo/name "false"})
-(xs/with-meta! `zero? {:exoscale.lingo/name "Zero"})
-(xs/with-meta! `empty? {:exoscale.lingo/name "Empty"})
-(xs/with-meta! `ident? {:exoscale.lingo/name "Identifier (keyword or symbol)"})
-(xs/with-meta! `qualified-ident? {:exoscale.lingo/name "Qualified Identifier (keyword or symbol)"})
-(xs/with-meta! `symbol? {:exoscale.lingo/name "Symbol"})
-(xs/with-meta! `uuid? {:exoscale.lingo/name "UUID"})
-(xs/with-meta! `uri? {:exoscale.lingo/name "URI"})
-(xs/with-meta! `int? {:exoscale.lingo/name "Integer"})
-(xs/with-meta! `nat-int? {:exoscale.lingo/name "Integer"})
-(xs/with-meta! `pos-int? {:exoscale.lingo/name "Positive Integer"})
-(xs/with-meta! `neg-int? {:exoscale.lingo/name "Negative Integer"})
-(xs/with-meta! `pos? {:exoscale.lingo/name "Positive number"})
-(xs/with-meta! `neg? {:exoscale.lingo/name "Negative number"})
-(xs/with-meta! `inst? {:exoscale.lingo/name "Instant"})
-(xs/with-meta! `some? {:exoscale.lingo/name "Non-nil"})
-(xs/with-meta! `nil? {:exoscale.lingo/name "nil"})
+(with-name! `string? "String")
+(with-name! `char? "Character")
+(with-name! `map? "Map")
+(with-name! `coll? "Collection")
+(with-name! `set? "Set")
+(with-name! `vector? "Vector")
+(with-name! `associative? "Associative (map, vector)")
+(with-name! `sequential?  "Sequential")
+(with-name! `number? "Number")
+(with-name! `bytes? "Bytes")
+(with-name! `float? "Float")
+(with-name! `double? "Double")
+(with-name! `boolean? "Boolean")
+(with-name! `true? "true")
+(with-name! `false? "false")
+(with-name! `zero? "Zero")
+(with-name! `empty? "Empty")
+(with-name! `ident? "Identifier (keyword or symbol)")
+(with-name! `qualified-ident? "Qualified Identifier (keyword or symbol)")
+(with-name! `symbol? "Symbol")
+(with-name! `uuid? "UUID")
+(with-name! `uri? "URI")
+(with-name! `int? "Integer")
+(with-name! `nat-int? "Integer")
+(with-name! `pos-int? "Positive Integer")
+(with-name! `neg-int? "Negative Integer")
+(with-name! `pos? "Positive number")
+(with-name! `neg? "Negative number")
+(with-name! `inst? "Instant")
+(with-name! `some? "Non-nil")
+(with-name! `nil? "nil")
 
 (defn spec-name
   [spec]
@@ -290,6 +302,7 @@
 
         (if highlight?
           (do (newline)
+              (newline)
               (print (highlight value in val))
               (newline)
               (newline))
@@ -367,8 +380,9 @@
   (s/def :foo/agent (s/coll-of (s/keys :req-un [:foo/person :foo/age])))
   (explain :foo/agent [{:age 10}]))
 
+(s/def :foo/age #(< % 30))
 (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
-(explain :foo/agent {:age 10, :person {:names '(1)}})
+(explain :foo/agent {:age 100, :person {:names '(1)}})
 
 ;; (do
 ;;   (space)
