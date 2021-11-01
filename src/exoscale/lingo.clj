@@ -216,7 +216,7 @@
 (defn explain-printer
   "Custom printer for explain-data. nil indicates a successful validation."
   [{:as ed
-    :clojure.spec.alpha/keys [problems spec]
+    :clojure.spec.alpha/keys [problems _spec]
     :exoscale.lingo/keys [pred-matcher]
     :or {pred-matcher *pred-matcher*}}]
   (if ed
