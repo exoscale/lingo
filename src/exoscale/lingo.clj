@@ -221,9 +221,13 @@
                     spec (last via)]]
         (print (pr-str val))
         (if spec
-          (print (format " is an invalid %s: " (spec-str spec)))
-          (print " is invalid: "))
+          (print (format " is an invalid %s" (spec-str spec)))
+          (print " is invalid"))
 
+        (when-not (empty? in)
+          (print (format " in `%s`" (pr-str in))))
+
+        (print " - ")
         (cond
           (some? err-message-override)
           (print err-message-override)
@@ -233,9 +237,6 @@
 
           :else
           (print (pred-str pred pred-matcher)))
-
-        (when-not (empty? in)
-          (print (str " in: " (pr-str in))))
 
         ;; (when-not (empty? path)
         ;;   (print (str " at: " (pr-str path))))
