@@ -51,9 +51,8 @@
 
 (defn spec-str
   [spec]
-  (if-let [sn (spec-name spec)]
-    (format " - spec: %s (%s)" (pr-str spec) sn)
-    (format " - spec: %s" (pr-str spec))))
+  (or (spec-name spec)
+      (pr-str spec)))
 
 (defn strip-core
   [sym]
@@ -224,10 +223,13 @@
     (let [problems (->> problems
                         (sort-by #(- (count (:in %))))
                         (sort-by #(- (count (:path %)))))]
-      (doseq [{:keys [_path pred val reason via in spec] :as prob} problems
-              :let [err-message-override (some-> via last error-message)]]
+      (doseq [{:keys [pred val reason via in _spec _path] :as prob} problems
+              :let [err-message-override (some-> via last error-message)
+                    spec (last via)]]
         (print (pr-str val))
-        (print " is invalid: ")
+        (if spec
+          (print (format " is an invalid %s: " (spec-str spec)))
+          (print " is invalid: "))
 
         (cond
           (some? err-message-override)
@@ -244,9 +246,9 @@
         ;; (when-not (empty? path)
         ;;   (print (str " at: " (pr-str path))))
 
-        (when-not (empty? via)
-          (let [spec (last via)]
-            (print (spec-str spec))))
+        ;; (when-not (empty? via)
+        ;;   (let [spec (last via)]
+        ;;     (print (spec-str spec))))
 
         (doseq [[k v] prob]
           (when-not (#{:path :pred :val :reason :via :in} k)

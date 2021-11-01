@@ -35,19 +35,19 @@
 
     ::thing
     1
-    "1 is invalid: thing should be a string with bla bla bla - spec: :exoscale.lingo.test.core-test/thing\n"
+    "1 is an invalid :exoscale.lingo.test.core-test/thing: thing should be a string with bla bla bla\n"
 
     (s/coll-of ::thing)
     [1]
-    "1 is invalid: thing should be a string with bla bla bla in: [0] - spec: :exoscale.lingo.test.core-test/thing\n"
+    "1 is an invalid :exoscale.lingo.test.core-test/thing: thing should be a string with bla bla bla in: [0]\n"
 
     ::things
     [1]
-    "1 is invalid: thing should be a string with bla bla bla in: [0] - spec: :exoscale.lingo.test.core-test/thing\n"
+    "1 is an invalid :exoscale.lingo.test.core-test/thing: thing should be a string with bla bla bla in: [0]\n"
 
     ::things
     1
-    "1 is invalid: should match Collection - spec: :exoscale.lingo.test.core-test/things\n"
+    "1 is an invalid :exoscale.lingo.test.core-test/things: should match Collection\n"
 
     (s/and string? #(> (count %) 3))
     ""
@@ -74,7 +74,7 @@
     "\"\" is invalid: should be a String non blank, at least 3 characters in length, at most 10 characters in length\n"
     (s/def :exoscale.lingo/c1 (s/map-of int? int? :count 3))
     {"a" "b"}
-    "{\"a\" \"b\"} is invalid: should contain exactly 3 elements - spec: :exoscale.lingo/c1\n"
+    "{\"a\" \"b\"} is an invalid :exoscale.lingo/c1: should contain exactly 3 elements\n"
 
     (s/and any? #(= 1 (count %)))
     []
@@ -178,24 +178,24 @@
 
     (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
     {:age 10}
-    "{:age 10} is invalid: missing key :person - spec: :foo/agent\n"
+    "{:age 10} is an invalid :foo/agent: missing key :person\n"
 
     (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
     {:age 10 :person {:names [1]}}
-    "1 is invalid: should match String in: [:person :names 0] - spec: :foo/name (Entity Name)\n"
+    "1 is an invalid Entity Name: should match String in: [:person :names 0]\n"
 
     (-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
         (xs/with-meta! {:exoscale.lingo/name "Agent"}))
     {:age ""}
-    "\"\" is invalid: should match Integer in: [:age] - spec: :foo/age\n{:age \"\"} is invalid: missing key :person - spec: :foo/agent2 (Agent)\n"
+    "\"\" is an invalid :foo/age: should match Integer in: [:age]\n{:age \"\"} is an invalid Agent: missing key :person\n"
 
     (s/def :foo/animal #{:a :b :c})
     1
-    "1 is invalid: should be one of :a,:b,:c - spec: :foo/animal\n"
+    "1 is an invalid :foo/animal: should be one of :a,:b,:c\n"
 
     :foo/person
     {:names [1 :yolo]}
-    "1 is invalid: should match String in: [:names 0] - spec: :foo/name (Entity Name)\n:yolo is invalid: should match String in: [:names 1] - spec: :foo/name (Entity Name)\n"
+    "1 is an invalid Entity Name: should match String in: [:names 0]\n:yolo is an invalid Entity Name: should match String in: [:names 1]\n"
 
     nil?
     1
