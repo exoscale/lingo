@@ -58,7 +58,7 @@
   [spec]
   (get (xs/meta spec) :exoscale.lingo/name))
 
-(defn error-message
+(defn spec-error-message
   [spec]
   (get (xs/meta spec) :exoscale.lingo/error))
 
@@ -202,9 +202,35 @@
                          (last form)
                          :else form))))))
 
+(defn- parent-spec
+  "Look up for the parent spec using the spec hierarchy."
+  [k]
+  (when-let [p (some-> k s/get-spec)]
+    (or (when (qualified-ident? p) p)
+        (s/form p))))
+
+(defn spec-vals
+  "Returns all spec keys or pred "
+  ([spec-ident]
+   (->> spec-ident
+        (iterate parent-spec)
+        (take-while some?))))
+
 (defn pred-str
   [pred pred-matcher]
   (pred-matcher (abbrev pred)))
+
+(defn find-error-message
+  "Given a spec named `k`, return its human-readable error message."
+  [problem k pred-matcher]
+  (reduce (fn [_ k]
+            (if (qualified-keyword? k)
+              (when-let [msg (spec-error-message k)]
+                (reduced msg))
+              (when-let [msg (-> problem :pred (pred-str pred-matcher))]
+                (reduced msg))))
+          nil
+          (spec-vals k)))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defmacro def-pred-matcher
@@ -219,217 +245,63 @@
      (alter-var-root #'*pred-matcher*
                      (fn [_#] (make-pred-matcher ptns#)))))
 
-(defn explain-printer
-  "Custom printer for explain-data. nil indicates a successful validation."
-  [{:as ed
-    :clojure.spec.alpha/keys [problems _spec value]
-    :exoscale.lingo/keys [pred-matcher]
-    :or {pred-matcher *pred-matcher*}}]
-  (if ed
-    (let [problems (->> problems
-
-                        (sort-by #(- (count (:path %)))))]
-      (doseq [{:keys [pred val reason via in _spec _path] :as prob} problems
-              :let [err-message-override (some-> via last error-message)
-                    spec (last via)]]
-
-        (print (pr-str val))
-
-        (when-not (empty? in)
-          (print (format " in `%s`" (pr-str in))))
-
-        (if spec
-          (print (format " is an invalid %s" (spec-str spec)))
-          (print " is invalid"))
-
-        (print " - ")
-        (cond
-          (some? err-message-override)
-          (print err-message-override)
-
-          reason
-          (print reason)
-
-          :else
-          (print (pred-str pred pred-matcher)))
-
-        ;; (when-not (empty? path)
-        ;;   (print (str " at: " (pr-str path))))
-
-        ;; (when-not (empty? via)
-        ;;   (let [spec (last via)]
-        ;;     (print (spec-str spec))))
-        (newline)
-
-        (doseq [[k v] prob]
-          (when-not (#{:path :pred :val :reason :via :in} k)
-            (print "\n\t" (pr-str k) " ")
-            (pr v)))))
-
-    (println "Success!")))
-
 (defn explain-data
   ([spec value]
    (explain-data spec value nil))
   ([spec value {:as _opts
                 :exoscale.lingo/keys [pred-matcher]
                 :or {pred-matcher *pred-matcher*}}]
-   (-> (s/explain-data spec value)
-       (update :clojure.spec.alpha/problems
-               (fn [pbs]
-                 (map (fn [{:keys [pred _val _reason via _in _spec _path] :as pb}]
-                        (assoc pb :message
-                               (or (some-> via last error-message)
-                                   (pred-str pred pred-matcher))))
-                      pbs))))))
+   (some-> (s/explain-data spec value)
+           (update :clojure.spec.alpha/problems
+                   (fn [pbs]
+                     (map (fn [{:keys [pred _val _reason via _in _spec _path] :as pb}]
+                            (let [spec (or (last via) pred)]
+                              (assoc pb
+                                     :exoscale.lingo/message (find-error-message pb
+                                                                                 spec
+                                                                                 pred-matcher))))
+                          (->> pbs
+                               (sort-by #(- (count (:path %)))))))))))
+
+(defn explain*
+  [spec value opts]
+  (if-let [{:as ed :clojure.spec.alpha/keys [problems spec]} (explain-data spec value opts)]
+    (doseq [{:as problem
+             :exoscale.lingo/keys [message]
+             :keys [via in val]} problems
+            :let [spec (last via)]]
+      (print (pr-str val))
+
+      (when-not (empty? in)
+        (print (format " in `%s`" (pr-str in))))
+
+      (if spec
+        (print (format " is an invalid %s" (spec-str spec)))
+        (print " is invalid"))
+
+      (print " - ")
+      (print message)
+      ;; (when-not (empty? path)
+      ;;   (print (str " at: " (pr-str path))))
+
+      ;; (when-not (empty? via)
+      ;;   (let [spec (last via)]
+      ;;     (print (spec-str spec))))
+      (newline))
+
+    (println "Success!")))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn explain-str
   "Like spec explain-str, but uses lingo printer"
-  [spec x]
-  (with-out-str
-    (binding [s/*explain-out* explain-printer]
-      (s/explain spec x))))
+  ([spec x] (explain-str spec x nil))
+  ([spec x opts]
+   (with-out-str
+     (explain* spec x opts))))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn explain
   "Like spec explain, but uses lingo printer"
-  [spec x]
-  (binding [s/*explain-out* explain-printer]
-    (s/explain spec x)))
-
-;; (s/def ::foo (s/coll-of string?))
-;; (explain-data ::foo 1)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; playground
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; (comment
-
-
-;; (defn space
-;;   []
-;;   (println)
-;;   (println)
-;;   (println (apply str (repeat 80 "-")))
-;;   (println))
-
-
-;; (do
-;;   (space)
-;;   (explain #{:a :b :c} "b"))
-
-;; (do
-;;   (space)
-;;   ;; (def-pred-matcher! '(pos? (count %)) "should be non blank")
-;;   (explain (s/and string? #(pos? (count %))) ""))
-
-;; (do
-;;   (space)
-;;   (def-pred-matcher '(pos? (count %)) "should be non blank")
-;;   (explain (s/and string? #(pos? (count %))) ""))
-
-;; (require '[exoscale.specs.string :as xss])
-;; (do
-;;   (space)
-;;   (explain (s/and string? #(xss/string-of* % {:blank? false :min-length 3 :max-length 10})) ""))
-
-;; ;;   (space)
-;; ;;   (explain (s/and string? something?) ""))
-
-;; (do
-;;   (space)
-;;   (explain zero? 1))
-
-;; (do
-;;   (space)
-;;   (s/def :exoscale.lingo/c1 (s/map-of int? int? :count 3))
-;;   (explain :exoscale.lingo/c1 {"a" "b"}))
-
-;; (do
-;;   (space)
-;;   (s/def :exoscale.lingo/c1 neg-int?)
-;;   (explain :exoscale.lingo/c1 [1 1]))
-
-;; (do
-;;   (s/def :foo/agent (s/coll-of (s/keys :req-un [:foo/person :foo/age])))
-;;   (explain :foo/agent [{:age 10}]))
-
-;; (s/def :foo/age #(< % 30))
-;; (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
-;; (explain :foo/agent {:age 100, :person {:names '(1)}})
-
-;; (do
-;;   (space)
-;;   (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
-;;   (explain :foo/agent {:age 10 :person {:names [1]}}))
-
-;; (do
-;;   (space)
-;;   (explain :foo/agent2 {:age ""}))
-
-;; (do
-;;   (space)
-;;   (s/def :foo/animal #{:a :b :c})
-;;   (explain :foo/animal 1))
-
-;; (do
-;;   (space)
-;;   (explain-str :foo/person {:names [1 :yolo]}))
-
-;; (do
-;;   (explain nil? 1)))
-
-;; (explain (s/coll-of any? :max-count 3 :min-count 2) [1 2 3 4])
-;; (require '[exoscale.specs.string :as xss])
-
-;; (do
-;;   (space)
-;;   (explain (xss/string-of {:blank? true}) ""))
-
-;; (do
-;;   (println (apply str (repeat 80 "-")))
-;;   (s/def :exoscale.lingo/animal (s/coll-of :exoscale.lingo/names))
-;;   (println (explain-str :exoscale.lingo/animal [[:exoscale.lingo/foo :bar]]))
-;;   (println))
-
-;; (do
-;;   (println (apply str (repeat 80 "-")))
-;;   (s/def :exoscale.lingo/animal #{:a :b :c})
-;;   (println (explain-str :exoscale.lingo/animal 1))
-;;   (println))
-
-;; (do
-;;   (println (apply str (repeat 80 "-")))
-;;   (s/def :exoscale.lingo/animal #{:a :b :c})
-;;   (println (explain-str :exoscale.lingo/animal "d"))
-;;   (println))
-
-;; (do
-;;   (println (apply str (repeat 80 "-")))
-;;   (s/def :exoscale.lingo/animal2 :exoscale.lingo/animal)
-;;   (println (explain-str :exoscale.lingo/animal2 1))
-;;   (println))
-
-;; (do
-;;   (println (apply str (repeat 80 "-")))
-;;   (s/def :exoscale.lingo/animal2 :exoscale.lingo/animal)
-;;   (println (explain-str :exoscale.lingo/animal2 "a"))
-;;   (println))
-
-;; (do
-;;   (println (apply str (repeat 80 "-")))
-;;   (s/def :exoscale.lingo/animal2 :exoscale.lingo/animal)
-;;   (println (explain-str int? "1"))
-;;   (println))
-;; (explain :exoscale.specs.net/url "")
-
-;; (defn f2?
-;;   [x]
-;;   false)
-
-;; (xs/with-meta! `f2? {::name "yolo"})
-
-;; ;; (def-pred-matcher 'exoscale.lingo/f2? "boom")
-
-;; (explain f2? 1)
+  ([spec x] (explain* spec x nil))
+  ([spec x opts]
+   (explain* spec x opts)))

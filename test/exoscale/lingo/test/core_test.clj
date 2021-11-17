@@ -45,6 +45,11 @@
     [1]
     "1 in `[0]` is an invalid :exoscale.lingo.test.core-test/thing - should be a string with bla bla bla\n"
 
+    ;; test traversing
+    (s/def ::things2 ::things)
+    [1]
+    "1 in `[0]` is an invalid :exoscale.lingo.test.core-test/thing - should be a string with bla bla bla\n"
+
     ::things
     1
     "1 is an invalid :exoscale.lingo.test.core-test/things - should match Collection\n"
