@@ -230,7 +230,6 @@
           nil
           (spec-vals k)))
 
-#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defmacro def-pred-matcher
   [ptn-in ptn-out]
   `(let [ptn-in# ~ptn-in
@@ -283,7 +282,6 @@
 
     (println "Success!")))
 
-#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn explain-str
   "Like spec explain-str, but uses lingo printer"
   ([spec x] (explain-str spec x nil))
@@ -291,7 +289,6 @@
    (with-out-str
      (explain* spec x opts))))
 
-#_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn explain
   "Like spec explain, but uses lingo printer"
   ([spec x] (explain* spec x nil))

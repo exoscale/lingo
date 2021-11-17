@@ -1,0 +1,9 @@
+{:linters
+ {:clojure-lsp/unused-public-var
+  {:level :warning
+   :exclude #{exoscale.lingo/explain
+              exoscale.lingo/explain-str
+              exoscale.lingo/explain-data
+              exoscale.lingo/def-pred-matcher}}}
+
+ :skip-comments true}
