@@ -2,8 +2,6 @@
   (:require [clojure.spec.alpha :as s]
             exoscale.specs.string
             exoscale.specs.net
-            [clojure.pprint :as pprint]
-            [clojure.string :as str]
             [exoscale.specs :as xs]
             [clojure.walk :as walk]
             [meander.epsilon :as m]))
@@ -265,8 +263,8 @@
 
 (defn explain*
   [spec value opts]
-  (if-let [{:as ed :clojure.spec.alpha/keys [problems spec]} (explain-data spec value opts)]
-    (doseq [{:as problem
+  (if-let [{:as _ed :clojure.spec.alpha/keys [problems]} (explain-data spec value opts)]
+    (doseq [{:as _problem
              :exoscale.lingo/keys [message]
              :keys [via in val]} problems
             :let [spec (last via)]]

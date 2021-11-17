@@ -5,8 +5,8 @@
             [exoscale.specs.string :as xss]
             [clojure.spec.alpha :as s]))
 
-(defn f2? [x] false)
-(defn f3? [x] false)
+(defn f2? [_] false)
+(defn f3? [_] false)
 
 (l/def-pred-matcher 'exoscale.lingo.test.core-test/f2? "yolo")
 (l/with-name! `f3? "Something")
