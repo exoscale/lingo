@@ -6,10 +6,7 @@
             [clojure.string :as str]
             [exoscale.specs :as xs]
             [clojure.walk :as walk]
-            [meander.epsilon :as m]
-            [rewrite-clj.zip :as z]
-            [rewrite-clj.node.token :as ztoken]
-            [rewrite-clj.node :as znode]))
+            [meander.epsilon :as m]))
 
 (defn with-name!
   "Adds custom name to a spec"
@@ -222,48 +219,15 @@
      (alter-var-root #'*pred-matcher*
                      (fn [_#] (make-pred-matcher ptns#)))))
 
-(defn pp-str
-  [x]
-  (with-out-str (pprint/pprint x)))
-
-(defn- add-caret
-  [index len]
-  (str (apply str (repeat (dec index) " "))
-       (apply str (repeat len "^"))))
-
-(defn highlight
-  "Naive trick: replace with unique marker, get index pos and return value with ~~~~^
-  Could be improved with clj-rewrite eventually"
-  [value in val]
-  (when in
-    (let [zroot (z/of-string (pp-str value) {:track-position? true})
-          zloc (reduce (fn [zloc z]
-                         (z/get zloc z))
-                       zroot
-                       in)
-          col-index (-> (z/position-span zloc) first second)]
-      (-> zloc
-          (z/insert-newline-right)
-          (z/insert-right* (ztoken/->TokenNode "<highlight>"
-                                               (add-caret col-index (count (pr-str val)))))
-          ;; TODO we could add a check to see if the line goes to
-          ;; 80chars (limit) and only split into a newline if it's the
-          ;; case (handling deep ds vs thin)
-          (z/insert-newline-right)
-          (z/root-string)))))
-
-;; (prn-str (highlight {:a 1 :b 2 :c [{:d {:a 1 :b 2}}]} [:c 0 :d] {:a 1 :b 2}))
-
 (defn explain-printer
   "Custom printer for explain-data. nil indicates a successful validation."
   [{:as ed
     :clojure.spec.alpha/keys [problems _spec value]
-    :exoscale.lingo/keys [pred-matcher highlight?]
-    :or {pred-matcher *pred-matcher*
-         highlight? false}}]
+    :exoscale.lingo/keys [pred-matcher]
+    :or {pred-matcher *pred-matcher*}}]
   (if ed
     (let [problems (->> problems
-                        (sort-by #(- (count (:in %))))
+
                         (sort-by #(- (count (:path %)))))]
       (doseq [{:keys [pred val reason via in _spec _path] :as prob} problems
               :let [err-message-override (some-> via last error-message)
@@ -295,21 +259,29 @@
         ;; (when-not (empty? via)
         ;;   (let [spec (last via)]
         ;;     (print (spec-str spec))))
+        (newline)
 
         (doseq [[k v] prob]
           (when-not (#{:path :pred :val :reason :via :in} k)
             (print "\n\t" (pr-str k) " ")
-            (pr v)))
-
-        (if highlight?
-          (do (newline)
-              (newline)
-              (print (highlight value in val))
-              (newline)
-              (newline))
-          (newline))))
+            (pr v)))))
 
     (println "Success!")))
+
+(defn explain-data
+  ([spec value]
+   (explain-data spec value nil))
+  ([spec value {:as _opts
+                :exoscale.lingo/keys [pred-matcher]
+                :or {pred-matcher *pred-matcher*}}]
+   (-> (s/explain-data spec value)
+       (update :clojure.spec.alpha/problems
+               (fn [pbs]
+                 (map (fn [{:keys [pred _val _reason via _in _spec _path] :as pb}]
+                        (assoc pb :message
+                               (or (some-> via last error-message)
+                                   (pred-str pred pred-matcher))))
+                      pbs))))))
 
 #_{:clj-kondo/ignore [:clojure-lsp/unused-public-var]}
 (defn explain-str
@@ -326,6 +298,8 @@
   (binding [s/*explain-out* explain-printer]
     (s/explain spec x)))
 
+;; (s/def ::foo (s/coll-of string?))
+;; (explain-data ::foo 1)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; playground
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
