@@ -8,7 +8,8 @@
 (defn f2? [_] false)
 (defn f3? [_] false)
 
-(l/def-pred-matcher 'exoscale.lingo.test.core-test/f2? "yolo")
+(l/register-matcher! 'exoscale.lingo.test.core-test/f2? (constantly "yolo"))
+
 (l/with-name! `f3? "Something")
 
 (-> (s/def ::thing #(string? %))
@@ -29,6 +30,9 @@
 
 (-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
     (l/with-name! "Agent"))
+
+(l/explain-data ::things 1)
+
 
 (deftest test-outputs
   (are [spec val output] (= (l/explain-str spec val) output)
@@ -65,7 +69,7 @@
 
     ;; with a custom pred matcher
     (do
-      (l/def-pred-matcher '(pos? (count %)) "should be non blank")
+      (l/register-matcher! '(pos? (count %)) "should be non blank")
       (s/and string? #(pos? (count %))))
     ""
     "\"\" is invalid - should be non blank\n"
