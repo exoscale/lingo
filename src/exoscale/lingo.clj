@@ -281,12 +281,6 @@
 
       (print " - ")
       (print message)
-      ;; (when-not (empty? path)
-      ;;   (print (str " at: " (pr-str path))))
-
-      ;; (when-not (empty? via)
-      ;;   (let [spec (last via)]
-      ;;     (print (spec-str spec))))
       (newline))
 
     (println "Success!")))
