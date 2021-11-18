@@ -4,14 +4,7 @@
             exoscale.specs.net
             [exoscale.specs :as xs]
             [clojure.walk :as walk]
-            [clojure.string :as str]
-            [meander.epsilon :as m]))
-
-(defn with-name!
-  "Adds custom name to a spec"
-  [spec name]
-  (xs/vary-meta! spec
-                 assoc :exoscale.lingo/name name))
+            [clojure.string :as str]))
 
 (defn with-error!
   "Adds custom error message for a spec"
@@ -20,42 +13,37 @@
                  assoc :exoscale.lingo/error error-msg))
 
 ;; set defaults for common idents
-
-(with-name! `string? "String")
-(with-name! `char? "Character")
-(with-name! `map? "Map")
-(with-name! `coll? "Collection")
-(with-name! `set? "Set")
-(with-name! `vector? "Vector")
-(with-name! `associative? "Associative (map, vector)")
-(with-name! `sequential?  "Sequential")
-(with-name! `number? "Number")
-(with-name! `bytes? "Bytes")
-(with-name! `float? "Float")
-(with-name! `double? "Double")
-(with-name! `boolean? "Boolean")
-(with-name! `true? "true")
-(with-name! `false? "false")
-(with-name! `zero? "Zero")
-(with-name! `empty? "Empty")
-(with-name! `ident? "Identifier (keyword or symbol)")
-(with-name! `qualified-ident? "Qualified Identifier (keyword or symbol)")
-(with-name! `symbol? "Symbol")
-(with-name! `uuid? "UUID")
-(with-name! `uri? "URI")
-(with-name! `int? "Integer")
-(with-name! `nat-int? "Integer")
-(with-name! `pos-int? "Positive Integer")
-(with-name! `neg-int? "Negative Integer")
-(with-name! `pos? "Positive number")
-(with-name! `neg? "Negative number")
-(with-name! `inst? "Instant")
-(with-name! `some? "Non-nil")
-(with-name! `nil? "nil")
-
-(defn spec-name
-  [spec]
-  (get (xs/meta spec) :exoscale.lingo/name))
+(with-error! `string? "should be a String")
+(with-error! `char? "should be a Character")
+(with-error! `map? "should be a Map")
+(with-error! `coll? "should be a Collection")
+(with-error! `set? "should be a Set")
+(with-error! `vector? "should be a Vector")
+(with-error! `associative? "should be an Associative (map, vector)")
+(with-error! `sequential?  "should be a Sequential")
+(with-error! `number? "should be a Number")
+(with-error! `bytes? "should be a Bytes")
+(with-error! `float? "should be a Float")
+(with-error! `double? "should be a Double")
+(with-error! `boolean? "should be a Boolean")
+(with-error! `true? "should be true")
+(with-error! `false? "should be false")
+(with-error! `zero? "should be Zero")
+(with-error! `empty? "should be Empty")
+(with-error! `ident? "should be an Identifier (keyword or symbol)")
+(with-error! `qualified-ident? "should be a Qualified Identifier (keyword or symbol)")
+(with-error! `symbol? "should be a Symbol")
+(with-error! `uuid? "should be a UUID")
+(with-error! `uri? "should be a URI")
+(with-error! `int? "should be an Integer")
+(with-error! `nat-int? "should be an Integer")
+(with-error! `pos-int? "should be a Positive Integer")
+(with-error! `neg-int? "should be a Negative Integer")
+(with-error! `pos? "should be a Positive number")
+(with-error! `neg? "should be a Negative number")
+(with-error! `inst? "should be a Instant")
+(with-error! `some? "should be Non-nil")
+(with-error! `nil? "should be nil")
 
 (defn spec-error-message
   [spec]
@@ -63,57 +51,13 @@
 
 (defn spec-str
   [spec]
-  (or (spec-name spec)
-      (pr-str spec)))
+  (pr-str spec))
 
 (defn strip-core
   [sym]
   (cond-> sym
     (= (namespace sym) "clojure.core")
     (-> name symbol)))
-
-(s/def ::contains
-  (s/cat :pred #{'contains?}
-         :arg any?
-         :key any?))
-
-(s/def ::set set?)
-(s/def ::ident ident?)
-
-(s/def ::min-count
-  (s/cat :_op #{'<=}
-         :min number?
-         :_cnt #{'(count %)}
-         :_max #{'Integer/MAX_VALUE}))
-
-(s/def ::max-count
-  (s/cat :_op #{'>=}
-         :_zero zero?
-         :_cnt #{'(count %)}
-         :max number?))
-
-(s/def ::between-count
-  (s/cat :_op #{<=}
-         :min number?
-         :_cnt #{'(count %)}
-         :max number?))
-
-(s/def ::compare-op
-  (s/or :count-1
-        (s/cat :op #{'= '< '> '<= '>= 'not=}
-               :_ #{'(count %)}
-               :x any?)
-        :count-2 (s/cat :op #{'= '< '> '<= '>= 'not=}
-                        :count number?
-                        :_ #{'(count %)})))
-
-(s/def ::int-in
-  (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
-         :min number?
-         :max number?
-         :_ #{'%}))
-
-;; (s/conform ::compare-op '(>= 1 (count %)))
 
 (def matchers-registry (atom {}))
 
@@ -123,38 +67,124 @@
   ([registry spec-key f]
    (swap! registry assoc spec-key f)))
 
-(defn find-matcher-message
+(-> (s/def ::set set?)
+    (register-matcher!
+     #(format "should be one of %s" (clojure.string/join "," (sort %)))))
+
+(-> (s/def ::contains-key
+      (s/cat :pred #{'contains?}
+             :arg any?
+             :key any?))
+    (register-matcher! #(format "missing key %s" (:key %))))
+
+(-> (s/def ::min-count
+      (s/cat :_op #{'<=}
+             :min number?
+             :_cnt #{'(count %)}
+             :_max #{'Integer/MAX_VALUE}))
+    (register-matcher!
+     #(format "should contain at least %s elements"
+              (:min %))))
+
+(-> (s/def ::max-count
+      (s/cat :_op #{'>=}
+             :_zero zero?
+             :_cnt #{'(count %)}
+             :max number?))
+    (register-matcher!
+     #(format "should contain at most %s elements"
+              (:max %))))
+
+(-> (s/def ::between-count
+      (s/cat :_op #{'<=}
+             :min number?
+             :_cnt #{'(count %)}
+             :max number?))
+    (register-matcher!
+     #(format "should contain between %s %s elements"
+              (:min %)
+              (:max %))))
+
+(-> (s/def ::compare-count-op
+      (s/or :count-1
+            (s/cat :op #{'= '< '> '<= '>= 'not=}
+                   :_ #{'(count %)}
+                   :x any?)
+            :count-2 (s/cat :op #{'= '< '> '<= '>= 'not=}
+                            :x number?
+                            :_ #{'(count %)})))
+    (register-matcher!
+     (fn [[_ {:keys [op x]}]]
+       (format "should contain %s %s %s"
+               (case op
+                 not= "not ="
+                 = "exactly"
+                 > "more than"
+                 < "less than"
+                 >= "at least"
+                 <= "at most")
+               x
+               (if (= 1 x)
+                 "element"
+                 "elements")))))
+
+(-> (s/def ::compare-op
+      (s/or :count-1
+            (s/cat :op #{'= '< '> '<= '>= 'not=}
+                   :_ #{'%}
+                   :x any?)
+            :count-2 (s/cat :op #{'= '< '> '<= '>= 'not=}
+                            :x any?
+                            :_ #{'%})))
+    (register-matcher!
+     (fn [[_ {:keys [op x]}]]
+       (format "should %s %s"
+               (case op
+                 not= "not be equal to"
+                 = "be equal to"
+                 > "be greater than"
+                 < "be less than"
+                 >= "be at least"
+                 <= "be at most")
+               x))))
+
+(-> (s/def ::int-in
+      (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
+             :min number?
+             :max number?
+             :_ #{'%}))
+    (register-matcher!
+     (fn [{:keys [min max]}]
+       (format "should be an Integer between %d %d" min max))))
+
+(-> (s/def ::string-of (s/cat :_ #{'exoscale.specs.string/string-of*}
+                              :_ #{'%}
+                              :opts map?))
+    (register-matcher!
+     (fn [{:keys [opts]}]
+       (let [{:keys [length min-length max-length blank? rx]} opts]
+         (str "should be a String "
+              (clojure.string/join ", "
+                                   (cond-> []
+                                     (false? blank?)
+                                     (conj "non blank")
+                                     min-length
+                                     (conj (format "at least %d characters in length" min-length))
+                                     max-length
+                                     (conj (format "at most %d characters in length" max-length))
+                                     length
+                                     (conj (format "exactly %d characters in length" length))
+                                     rx
+                                     (conj (format "matching the regex %s" rx)))))))))
+
+(defn find-registry-pred-message
   [registry x]
   (reduce (fn [_ [k formater]]
-            (prn k)
-            (let [match (and (s/get-spec k) (s/conform k x))]
+            (when-let [match (and (s/get-spec k) (s/conform k x))]
               (when (not= match :clojure.spec.alpha/invalid)
                 (reduced (formater match)))))
           nil
           @registry))
-
-(register-matcher! matchers-registry ::contains #(format "missing key %s" (:key %)))
-(register-matcher! matchers-registry ::set #(format "should be one of %s" (clojure.string/join "," %)))
-(register-matcher! matchers-registry ::min-count #(format "should contain at least %s elements"
-                                                          (:min %)))
-(register-matcher! matchers-registry ::max-count #(format "should contain at most %s elements"
-                                                          (:min %)))
-
-(register-matcher! matchers-registry ::between-count #(format "should contain between %s %s elements"
-                                                              (:min %)
-                                                              (:max %)))
-
-(register-matcher! matchers-registry ::compare-op
-                   (fn [[_ {:keys [op x]}]]
-                     (format "should contain %s %s element(s)"
-                             (case op
-                               not= "not="
-                               = "="
-                               > ">"
-                               < "<"
-                               >= ">="
-                               <= "<=")
-                             x)))
 
 (defn- abbrev [form]
   (cond->> form
@@ -189,25 +219,20 @@
         (iterate parent-spec)
         (take-while some?))))
 
-(defn pred-str
+(defn find-pred-error-message
   [pred registry]
-  (find-matcher-message registry
-                        (abbrev pred)))
+  (if (qualified-ident? pred)
+    (spec-error-message (abbrev pred))
+    (find-registry-pred-message registry
+                                (abbrev pred))))
 
-(xs/meta :exoscale.lingo.test.core-test/things)
-(defn find-error-message
-  "Given a spec named `k`, return its human-readable error message."
-  [problem k pred-matcher]
-  (prn :sv (spec-vals k))
-  (reduce (fn [_ k]
-            (prn :k k)
-            (if (qualified-keyword? k)
-              (when-let [msg (spec-error-message k)]
-                (reduced msg))
-              (when-let [msg (-> problem :pred (pred-str pred-matcher))]
-                (reduced msg))))
+(defn find-ident-error-message
+  [spec]
+  (reduce (fn [_ spec]
+            (when-let [msg (spec-error-message (abbrev spec))]
+              (reduced msg)))
           nil
-          (spec-vals k)))
+          (spec-vals spec)))
 
 (defn explain-data
   ([spec value]
@@ -219,13 +244,14 @@
            (update :clojure.spec.alpha/problems
                    (fn [pbs]
                      (map (fn [{:keys [pred _val _reason via _in _spec _path] :as pb}]
-                            (let [spec (or (last via) pred)]
-                              (assoc pb
-                                     :exoscale.lingo/message (find-error-message pb
-                                                                                 spec
-                                                                                 registry))))
-                          (->> pbs
-                               (sort-by #(- (count (:path %)))))))))))
+                            (let [spec (last via)]
+                              ;; first check if we have a custom message for `spec` (traversing)
+                              (assoc pb :exoscale.lingo/message
+                                     (or (find-ident-error-message spec)
+                                         (find-pred-error-message pred registry)
+                                         (abbrev pred)))))
+                          (sort-by #(- (count (:path %)))
+                                   pbs)))))))
 
 (defn explain*
   [spec value opts]
