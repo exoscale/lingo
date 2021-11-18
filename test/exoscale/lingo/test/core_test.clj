@@ -66,7 +66,8 @@
 
     ;; with a custom pred matcher
     (do
-      (l/register-matcher! '(pos? (count %)) "should be non blank")
+      (-> (s/def ::non-blank #{'(pos? (count %))})
+          (l/register-matcher! (constantly "should be non blank")))
       (s/and string? #(pos? (count %))))
     ""
     "\"\" is invalid - should be non blank\n"
