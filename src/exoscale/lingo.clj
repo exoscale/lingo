@@ -245,11 +245,16 @@
                    (fn [pbs]
                      (map (fn [{:keys [pred _val _reason via _in _spec _path] :as pb}]
                             (let [spec (last via)]
-                              ;; first check if we have a custom message for `spec` (traversing)
                               (assoc pb :exoscale.lingo/message
-                                     (or (find-ident-error-message spec)
-                                         (find-pred-error-message pred registry)
-                                         (abbrev pred)))))
+                                     (or
+                                      ;; first try to find a custom error for this specific
+                                      ;; `spec` key (and potential aliases)
+                                      (find-ident-error-message spec)
+                                      ;; try to find message for `pred` via custom error
+                                      ;; first and then using the matcher if that fails
+                                      (find-pred-error-message pred registry)
+                                      ;; all failed, return abreviated pred form
+                                      (abbrev pred)))))
                           (sort-by #(- (count (:path %)))
                                    pbs)))))))
 
