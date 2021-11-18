@@ -8,27 +8,28 @@
 (defn f2? [_] false)
 (defn f3? [_] false)
 
-(l/def-pred-matcher 'exoscale.lingo.test.core-test/f2? "yolo")
-(l/with-name! `f3? "Something")
+(l/with-error! `exoscale.lingo.test.core-test/f2? "yolo")
+(l/with-error! `f3? "should match Something")
 
 (-> (s/def ::thing #(string? %))
     (l/with-error! "should be a string with bla bla bla"))
 
 (s/def ::things (s/coll-of ::thing))
 
-(-> (s/def :foo/name string?)
-    (l/with-name! "Entity Name"))
+(s/def :foo/name string?)
 
 (s/def :foo/names (s/coll-of :foo/name))
 
-(-> (s/def :foo/person (s/keys :req-un [:foo/names]))
-    (l/with-name! "Person"))
+(s/def :foo/person (s/keys :req-un [:foo/names]))
 
 (s/def :foo/age int?)
 (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
 
-(-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
-    (l/with-name! "Agent"))
+(s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
+
+(do
+  (println "-------------------------")
+  (l/explain-data ::things 1))
 
 (deftest test-outputs
   (are [spec val output] (= (l/explain-str spec val) output)
@@ -52,7 +53,7 @@
 
     ::things
     1
-    "1 is an invalid :exoscale.lingo.test.core-test/things - should match Collection\n"
+    "1 is an invalid :exoscale.lingo.test.core-test/things - should be a Collection\n"
 
     (s/and string? #(> (count %) 3))
     ""
@@ -65,7 +66,8 @@
 
     ;; with a custom pred matcher
     (do
-      (l/def-pred-matcher '(pos? (count %)) "should be non blank")
+      (-> (s/def ::non-blank #{'(pos? (count %))})
+          (l/register-matcher! (constantly "should be non blank")))
       (s/and string? #(pos? (count %))))
     ""
     "\"\" is invalid - should be non blank\n"
@@ -103,19 +105,19 @@
 
     (s/and any? #(<= (count %) 1))
     [1 1]
-    "[1 1] is invalid - should contain at most 1 elements\n"
+    "[1 1] is invalid - should contain at most 1 element\n"
 
     (s/and any? #(<= % 1))
     10
-    "10 is invalid - should be smaller or equal than 1\n"
+    "10 is invalid - should be at most 1\n"
 
     (s/and any? #(< % 1))
     10
-    "10 is invalid - should be smaller than 1\n"
+    "10 is invalid - should be less than 1\n"
 
     (s/and any? #(>= % 1))
     0
-    "0 is invalid - should be greater or equal than 1\n"
+    "0 is invalid - should be at least 1\n"
 
     (s/and any? #(> % 1))
     0
@@ -135,11 +137,7 @@
 
     (s/double-in :min 0 :max 10)
     (double 11)
-    "11.0 is invalid - should be smaller or equal than 10\n"
-
-    (s/double-in :infinite? false)
-    ##Inf
-    "##Inf is invalid - cannot be Infinite\n"
+    "11.0 is invalid - should be at most 10\n"
 
     (s/coll-of any? :min-count 3)
     [1]
@@ -147,7 +145,7 @@
 
     (s/coll-of any? :max-count 3)
     [1 1 1 1]
-    "[1 1 1 1] is invalid - should contain at most 3 elements\n"
+    "[1 1 1 1] is invalid - should contain between 0 3 elements\n"
 
     (s/coll-of any? :max-count 3 :min-count 1)
     [1 1 1 1]
@@ -163,7 +161,7 @@
 
     (s/coll-of any? :kind set?)
     [1]
-    "[1] is invalid - should match Set\n"
+    "[1] is invalid - should be a Set\n"
 
     (s/map-of any? any? :count 1)
     {:a 1 :b 2}
@@ -171,15 +169,7 @@
 
     neg-int?
     [1]
-    "[1] is invalid - should match Negative Integer\n"
-
-    (s/double-in :NaN? false)
-    ##NaN
-    "##NaN is invalid - cannot be NaN\n"
-
-    (s/double-in :infinite? false)
-    ##Inf
-    "##Inf is invalid - cannot be Infinite\n"
+    "[1] is invalid - should be a Negative Integer\n"
 
     (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
     {:age 10}
@@ -187,12 +177,13 @@
 
     (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
     {:age 10 :person {:names [1]}}
-    "1 in `[:person :names 0]` is an invalid Entity Name - should match String\n"
+    "1 in `[:person :names 0]` is an invalid :foo/name - should be a String\n"
 
     (-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
-        (xs/with-meta! {:exoscale.lingo/name "Agent"}))
+        ;; (xs/with-meta! {:exoscale.lingo/name "Agent"})
+        )
     {:age ""}
-    "\"\" in `[:age]` is an invalid :foo/age - should match Integer\n{:age \"\"} is an invalid Agent - missing key :person\n"
+    "\"\" in `[:age]` is an invalid :foo/age - should be an Integer\n{:age \"\"} is an invalid :foo/agent2 - missing key :person\n"
 
     (s/def :foo/animal #{:a :b :c})
     1
@@ -200,11 +191,11 @@
 
     :foo/person
     {:names [1 :yolo]}
-    "1 in `[:names 0]` is an invalid Entity Name - should match String\n:yolo in `[:names 1]` is an invalid Entity Name - should match String\n"
+    "1 in `[:names 0]` is an invalid :foo/name - should be a String\n:yolo in `[:names 1]` is an invalid :foo/name - should be a String\n"
 
     nil?
     1
-    "1 is invalid - should match nil\n"
+    "1 is invalid - should be nil\n"
 
     f2?
     1
