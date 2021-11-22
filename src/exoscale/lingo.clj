@@ -236,20 +236,21 @@
 
 (defn path-str
   [in]
-  (letfn [(mdot [s] (when (seq s) (str ".")))]
-    (reduce (fn [s segment]
-              (str s
-                   (cond
-                     (nat-int? segment)
-                     (format "[%s]" segment)
+  (when (seq in)
+    (letfn [(mdot [s] (when (seq s) (str ".")))]
+      (reduce (fn [s segment]
+                (str s
+                     (cond
+                       (nat-int? segment)
+                       (format "[%s]" segment)
 
-                     (keyword? segment)
-                     (str (mdot s) (name segment))
+                       (keyword? segment)
+                       (str (mdot s) (name segment))
 
-                     :else
-                     (str (mdot s) (str segment)))))
-            nil
-            in)))
+                       :else
+                       (str (mdot s) (str segment)))))
+              nil
+              in))))
 
 (defn explain-data
   ([spec value]
@@ -261,19 +262,21 @@
            (update :clojure.spec.alpha/problems
                    (fn [pbs]
                      (map (fn [{:keys [pred _val _reason via in _spec _path] :as pb}]
-                            (let [spec (last via)]
-                              (assoc pb
-                                     :exoscale.lingo/message
-                                     (or
-                                      ;; first try to find a custom error for this specific
-                                      ;; `spec` key (and potential aliases)
-                                      (find-ident-error-message spec)
-                                      ;; try to find message for `pred` via custom error
-                                      ;; first and then using the matcher if that fails
-                                      (find-pred-error-message pred registry)
-                                      ;; all failed, return abreviated pred form
-                                      (abbrev pred))
-                                     :exoscale.lingo/path (path-str in))))
+                            (let [spec (last via)
+                                  path (path-str in)]
+                              (cond-> (assoc pb
+                                             :exoscale.lingo/message
+                                             (or
+                                              ;; first try to find a custom error for this specific
+                                              ;; `spec` key (and potential aliases)
+                                              (find-ident-error-message spec)
+                                              ;; try to find message for `pred` via custom error
+                                              ;; first and then using the matcher if that fails
+                                              (find-pred-error-message pred registry)
+                                              ;; all failed, return abreviated pred form
+                                              (abbrev pred)))
+                                path
+                                (assoc :exoscale.lingo/path path))))
                           (sort-by #(- (count (:path %)))
                                    pbs)))))))
 

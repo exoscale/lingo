@@ -1,7 +1,6 @@
 (ns exoscale.lingo.test.core-test
   (:require [clojure.test :refer [are deftest]]
             [exoscale.lingo :as l]
-            [exoscale.specs :as xs]
             [exoscale.specs.string :as xss]
             [clojure.spec.alpha :as s]))
 
