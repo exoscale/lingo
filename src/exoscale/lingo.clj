@@ -234,6 +234,23 @@
           nil
           (spec-vals spec)))
 
+(defn path-str
+  [in]
+  (letfn [(mdot [s] (when (seq s) (str ".")))]
+    (reduce (fn [s segment]
+              (str s
+                   (cond
+                     (nat-int? segment)
+                     (format "[%s]" segment)
+
+                     (keyword? segment)
+                     (str (mdot s) (name segment))
+
+                     :else
+                     (str (mdot s) (str segment)))))
+            nil
+            in)))
+
 (defn explain-data
   ([spec value]
    (explain-data spec value nil))
@@ -243,9 +260,10 @@
    (some-> (s/explain-data spec value)
            (update :clojure.spec.alpha/problems
                    (fn [pbs]
-                     (map (fn [{:keys [pred _val _reason via _in _spec _path] :as pb}]
+                     (map (fn [{:keys [pred _val _reason via in _spec _path] :as pb}]
                             (let [spec (last via)]
-                              (assoc pb :exoscale.lingo/message
+                              (assoc pb
+                                     :exoscale.lingo/message
                                      (or
                                       ;; first try to find a custom error for this specific
                                       ;; `spec` key (and potential aliases)
@@ -254,9 +272,11 @@
                                       ;; first and then using the matcher if that fails
                                       (find-pred-error-message pred registry)
                                       ;; all failed, return abreviated pred form
-                                      (abbrev pred)))))
+                                      (abbrev pred))
+                                     :exoscale.lingo/path (path-str in))))
                           (sort-by #(- (count (:path %)))
                                    pbs)))))))
+
 
 (defn explain*
   [spec value opts]
@@ -268,7 +288,7 @@
       (print (pr-str val))
 
       (when-not (empty? in)
-        (print (format " in `%s`" (pr-str in))))
+        (print (format " in `%s`" (path-str in))))
 
       (if spec
         (print (format " is an invalid %s" (spec-str spec)))

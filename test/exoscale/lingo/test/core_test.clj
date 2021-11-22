@@ -32,7 +32,8 @@
   (l/explain-data ::things 1))
 
 (deftest test-outputs
-  (are [spec val output] (= (l/explain-str spec val) output)
+  (are [spec val output] (= (l/explain-str spec val)
+                            output)
 
     ::thing
     1
@@ -177,13 +178,13 @@
 
     (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
     {:age 10 :person {:names [1]}}
-    "1 in `[:person :names 0]` is an invalid :foo/name - should be a String\n"
+    "1 in `person.names[0]` is an invalid :foo/name - should be a String\n"
 
     (-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
         ;; (xs/with-meta! {:exoscale.lingo/name "Agent"})
         )
     {:age ""}
-    "\"\" in `[:age]` is an invalid :foo/age - should be an Integer\n{:age \"\"} is an invalid :foo/agent2 - missing key :person\n"
+    "\"\" in `age` is an invalid :foo/age - should be an Integer\n{:age \"\"} is an invalid :foo/agent2 - missing key :person\n"
 
     (s/def :foo/animal #{:a :b :c})
     1
@@ -191,7 +192,7 @@
 
     :foo/person
     {:names [1 :yolo]}
-    "1 in `[:names 0]` is an invalid :foo/name - should be a String\n:yolo in `[:names 1]` is an invalid :foo/name - should be a String\n"
+    "1 in `names[0]` is an invalid :foo/name - should be a String\n:yolo in `names[1]` is an invalid :foo/name - should be a String\n"
 
     nil?
     1
