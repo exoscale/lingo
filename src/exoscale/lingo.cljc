@@ -119,7 +119,10 @@
 (set-spec-error! `some? "should be Non-nil")
 (set-spec-error! `nil? "should be nil")
 
+;;; pred errors
+
 (set-pred-error! set? #(format "should be one of %s" (str/join "," (sort %))))
+
 (set-pred-error! (s/cat :pred #{'contains?}
                         :arg any?
                         :key any?)

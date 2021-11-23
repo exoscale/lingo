@@ -122,9 +122,16 @@ This is a trivial example, but if you take a s/coll-of (or any of
 s/every variants), which can return a miriad of `preds` depending on
 how failure happened, this will return very fine grained error message
 that pin-point exactly how the value failed.
+This is also very handy for more "custom" other uses cases, such as
+`exoscale.specs/string-of` and other paramerized specs we might have.
 
-The tests demonstrate some of these : https://github.com/exoscale/lingo/blob/master/test/exoscale/lingo/test/core_test.cljc
+By default a lot of common predicates are supported out of the box ,
+most math comparaison operators and compositions of these with `count`
+for instance, Set/Map membership (or lack thereof), and most of
+clojure.spec custom predicates.
 
+The tests demonstrate some of these :
+https://github.com/exoscale/lingo/blob/master/test/exoscale/lingo/test/core_test.cljc
 
 ## License
 
