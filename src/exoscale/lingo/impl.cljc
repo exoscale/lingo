@@ -78,7 +78,7 @@
                 (str s
                      (cond
                        (nat-int? segment)
-                       (format "[%s]" segment)
+                       (format "[%d]" segment)
 
                        (keyword? segment)
                        (str (mdot s) (name segment))
