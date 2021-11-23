@@ -4,15 +4,20 @@
 > a particular field, group, or individual
 
 Trying to make spec explain message more human readable with small
-additions
+additions.
 
 ## Documentation
 
 Adds 3 functions similar to clojure.spec.alpha/explain-*
 
-* `exoscale.lingo/explain-data`
-* `exoscale.lingo/explain`
-* `exoscale.lingo/explain-str`
+* `exoscale.lingo/explain-data`: returns
+  clojure.spec.alpha/explain-data for spec/value with extra fields
+
+* `exoscale.lingo/explain`: uses exoscale.lingo/explain-data but prints
+  a nicely formated message)
+
+* `exoscale.lingo/explain-str`: same as exoscale.lingo/explain but
+  returns a string instead of printing)
 
 `exoscale.lingo/explain-data` is the most important one (the others are
 based on it)
@@ -119,6 +124,7 @@ how failure happened, this will return very fine grained error message
 that pin-point exactly how the value failed.
 
 The tests demonstrate some of these : https://github.com/exoscale/lingo/blob/master/test/exoscale/lingo/test/core_test.cljc
+
 
 ## License
 
