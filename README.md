@@ -8,15 +8,117 @@ additions
 
 ## Documentation
 
-* leverage `exoscale.specs` metatada to display better error messages
-  (spec name **and** full error message)
-* infer from anonymous explain :pred forms decent messages (with
-  pattern matching on form via meander)
-* provide improved default explain for missing keys, sets/enums, most
-  of core functions predictates and common spec forms.
+Adds 3 functions similar to clojure.spec.alpha/explain-*
 
-## Installation
+* `exoscale.lingo/explain-data`
+* `exoscale.lingo/explain`
+* `exoscale.lingo/explain-str`
 
+`exoscale.lingo/explain-data` is the most important one (the others are
+based on it)
+
+It will take a spec, a value and potentially options and return clojure.spec
+explain-data for it with extra fields added.
+
+For now it extends clojure.spec.alpha/problems with
+`exoscale.lingo/message` and `exoscale.lingo/path`:
+
+```clj
+(s/def :foo/person (keys :req-un [:foo/names]))
+(s/def :foo/names (s/coll-of :foo/name))
+(s/def :foo/name string?)
+
+(exoscale.lingo/explain-data :foo/person {:names [1 :yolo]})
+
+#:clojure.spec.alpha{:problems
+                     ({:path [:names],
+                       :pred clojure.core/string?,
+                       :val 1,
+                       :via [:foo/person :foo/names :foo/name],
+                       :in [:names 0],
+                       :exoscale.lingo/message "should be a String",
+                       :exoscale.lingo/path "names[0]"}
+                      {:path [:names],
+                       :pred clojure.core/string?,
+                       :val :yolo,
+                       :via [:foo/person :foo/names :foo/name],
+                       :in [:names 1],
+                       :exoscale.lingo/message "should be a String",
+                       :exoscale.lingo/path "names[1]"}),
+                     :spec :foo/person,
+                     :value {:names [1 :yolo]}}
+```
+
+There are 2 ways to specify custom messages, depending on what is the
+source you start from:
+
+If you are working from spec identifiers or static forms you can use `set-spec-error!`, it will dispatch on the problem spec, potentially resolving aliases too, up to the pred failing at the end:
+
+``` clj
+(set-spec-error! `string? "should be a String")
+(set-spec-error! ::thing "should be a Thing")
+(set-spec-error! (s/coll-of ::thing) "should be a collection of Things")
+```
+
+If you want to have more precise error handling based on the problem
+pred only (usually it's the best things to do) you can use `set-pred-error!`.
+
+``` clj
+(set-pred-error! (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
+                        :min number?
+                        :max number?
+                        :_ #{'%})
+                 (fn [{:keys [min max]}]
+                   (format "should be an Integer between %d %d" min max)))
+```
+
+This will use the first argument to perform conforming against the
+pred in the explain-data problems and use the bound values with second
+argument, a function to generate a precise message.
+
+so for an error like this:
+
+```clj
+#:clojure.spec.alpha{:problems
+                     [{:path [],
+                       :pred
+                       (clojure.core/fn
+                        [%]
+                        (clojure.spec.alpha/int-in-range? 0 3 %)),
+                       :val 4,
+                       :via [],
+                       :in []}],
+                     :spec
+                     #object[clojure.spec.alpha$and_spec_impl$reify__blabla]
+                     :value 4}
+```
+
+
+
+It will pass the abbreviated `(clojure.spec.alpha/int-in-range? 0 3
+%)` to the conformed we defined.
+
+``` clj
+(s/cat :_ #{'clojure.spec.alpha/int-in-range?}
+                        :min number?
+                        :max number?
+                        :_ #{'%})
+```
+
+Which will destructure it to `{:min 0 :max 3}` and call the following
+function on it.
+
+``` clj
+(fn [{:keys [min max]}]
+   (format "should be an Integer between %d %d" min max))
+```
+
+This is a trivial example, but if you take a s/coll-of (or any of
+s/every variants), which can return a miriad of `preds` depending on
+how failure happened, this will return very fine grained error message
+that pin-point exactly how the value failed.
+
+The tests demonstrate some of these : https://github.com/exoscale/lingo/blob/master/test/exoscale/lingo/test/core_test.cljc
 
 ## License
 
