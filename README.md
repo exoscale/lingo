@@ -101,7 +101,7 @@ so for an error like this:
 
 
 It will pass the abbreviated `(clojure.spec.alpha/int-in-range? 0 3
-%)` to the conformed we defined.
+%)` to the conforming spec we defined.
 
 ``` clj
 (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
