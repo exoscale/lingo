@@ -1,6 +1,13 @@
 (ns exoscale.lingo.impl
+  (:refer-clojure :exclude [format])
   (:require [clojure.walk :as walk]
-            [clojure.spec.alpha :as s]))
+            [clojure.spec.alpha :as s]
+            #?@(:cljs [[goog.string]
+                       [goog.string.format]])))
+
+(def format
+  #?(:clj clojure.core/format
+     :cljs goog.string/format))
 
 (defn spec-error-message
   [spec registry-val]

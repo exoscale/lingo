@@ -7,7 +7,7 @@
 
 (defn set-pred-error!
   "Set conforming spec `spec-ptn` for matching/binding values for later
-  message formating via `f bindings`"
+  message impl/formating via `f bindings`"
   [spec-ptn f]
   (swap! registry-ref
          assoc-in
@@ -66,10 +66,10 @@
        (print (pr-str val))
 
        (when-not (empty? in)
-         (print (format " in `%s`" (impl/path-str in))))
+         (print (impl/format " in `%s`" (impl/path-str in))))
 
        (if spec
-         (print (format " is an invalid %s" (pr-str spec)))
+         (print (impl/format " is an invalid %s" (pr-str spec)))
          (print " is invalid"))
 
        (print " - ")
@@ -119,34 +119,34 @@
 (set-spec-error! `some? "should be Non-nil")
 (set-spec-error! `nil? "should be nil")
 
-;;; pred errors
+;; pred errors
 
-(set-pred-error! set? #(format "should be one of %s" (str/join "," (sort %))))
+(set-pred-error! set? #(impl/format "should be one of %s" (str/join "," (sort %))))
 
 (set-pred-error! (s/cat :pred #{'contains?}
                         :arg any?
                         :key any?)
-                 #(format "missing key %s" (:key %)))
+                 #(impl/format "missing key %s" (:key %)))
 
 (set-pred-error! (s/cat :_op #{'<=}
                         :min number?
                         :_cnt #{'(count %)}
                         :_max #{'Integer/MAX_VALUE})
-                 #(format "should contain at least %s elements"
+                 #(impl/format "should contain at least %s elements"
                           (:min %)))
 
 (set-pred-error! (s/cat :_op #{'>=}
                         :_zero #{0}
                         :_cnt #{'(count %)}
                         :max number?)
-                 #(format "should contain at most %s elements"
+                 #(impl/format "should contain at most %s elements"
                           (:max %)))
 
 (set-pred-error! (s/cat :_op #{'<=}
                         :min number?
                         :_cnt #{'(count %)}
                         :max number?)
-                 #(format "should contain between %s %s elements"
+                 #(impl/format "should contain between %s %s elements"
                           (:min %)
                           (:max %)))
 
@@ -158,7 +158,7 @@
                                        :x number?
                                        :_ #{'(count %)}))
                  (fn [[_ {:keys [op x]}]]
-                   (format "should contain %s %s %s"
+                   (impl/format "should contain %s %s %s"
                            (case op
                              not= "not ="
                              = "exactly"
@@ -179,22 +179,22 @@
                                        :x any?
                                        :_ #{'%}))
                  (fn [[_ {:keys [op x]}]]
-                   (format "should %s %s"
-                           (case op
-                             not= "not be equal to"
-                             = "be equal to"
-                             > "be greater than"
-                             < "be less than"
-                             >= "be at least"
-                             <= "be at most")
-                           x)))
+                   (impl/format "should %s %s"
+                                (case op
+                                  not= "not be equal to"
+                                  = "be equal to"
+                                  > "be greater than"
+                                  < "be less than"
+                                  >= "be at least"
+                                  <= "be at most")
+                                x)))
 
 (set-pred-error! (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
                         :min number?
                         :max number?
                         :_ #{'%})
                  (fn [{:keys [min max]}]
-                   (format "should be an Integer between %d %d" min max)))
+                   (impl/format "should be an Integer between %d %d" min max)))
 
 #_(set-pred-explain! (s/cat :_ #{'exoscale.specs.string/string-of*}
                             :_ #{'%}
@@ -207,10 +207,10 @@
                                                      (false? blank?)
                                                      (conj "non blank")
                                                      min-length
-                                                     (conj (format "at least %d characters in length" min-length))
+                                                     (conj (impl/format "at least %d characters in length" min-length))
                                                      max-length
-                                                     (conj (format "at most %d characters in length" max-length))
+                                                     (conj (impl/format "at most %d characters in length" max-length))
                                                      length
-                                                     (conj (format "exactly %d characters in length" length))
+                                                     (conj (impl/format "exactly %d characters in length" length))
                                                      rx
-                                                     (conj (format "matching the regex %s" rx))))))))
+                                                     (conj (impl/format "matching the regex %s" rx))))))))
