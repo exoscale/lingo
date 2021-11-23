@@ -1,17 +1,17 @@
 (ns exoscale.lingo.test.core-test
   (:require [clojure.test :refer [are deftest]]
             [exoscale.lingo :as l]
-            [exoscale.specs.string :as xss]
+            ;; [exoscale.specs.string :as xss]
             [clojure.spec.alpha :as s]))
 
 (defn f2? [_] false)
 (defn f3? [_] false)
 
-(l/with-error! `exoscale.lingo.test.core-test/f2? "yolo")
-(l/with-error! `f3? "should match Something")
+(l/set-spec-error! `exoscale.lingo.test.core-test/f2? "yolo")
+(l/set-spec-error! `f3? "should match Something")
 
 (-> (s/def ::thing #(string? %))
-    (l/with-error! "should be a string with bla bla bla"))
+    (l/set-spec-error! "should be a string with bla bla bla"))
 
 (s/def ::things (s/coll-of ::thing))
 
@@ -66,8 +66,7 @@
 
     ;; with a custom pred matcher
     (do
-      (-> (s/def ::non-blank #{'(pos? (count %))})
-          (l/register-matcher! (constantly "should be non blank")))
+      (l/set-pred-error! #{'(pos? (count %))} (constantly "should be non blank"))
       (s/and string? #(pos? (count %))))
     ""
     "\"\" is invalid - should be non blank\n"
@@ -76,9 +75,9 @@
     "b"
     "\"b\" is invalid - should be one of :a,:b,:c\n"
 
-    (s/and string? #(xss/string-of* % {:blank? false :min-length 3 :max-length 10}))
-    ""
-    "\"\" is invalid - should be a String non blank, at least 3 characters in length, at most 10 characters in length\n"
+    ;; (s/and string? #(xss/string-of* % {:blank? false :min-length 3 :max-length 10}))
+    ;; ""
+    ;; "\"\" is invalid - should be a String non blank, at least 3 characters in length, at most 10 characters in length\n"
     (s/def :exoscale.lingo/c1 (s/map-of int? int? :count 3))
     {"a" "b"}
     "{\"a\" \"b\"} is an invalid :exoscale.lingo/c1 - should contain exactly 3 elements\n"
