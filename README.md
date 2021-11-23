@@ -17,10 +17,9 @@ Adds 3 functions similar to clojure.spec.alpha/explain-*
   a nicely formated message)
 
 * `exoscale.lingo/explain-str`: same as exoscale.lingo/explain but
-  returns a string instead of printing)
+  returns a string instead of printing
 
-`exoscale.lingo/explain-data` is the most important one (the others are
-based on it)
+`exoscale.lingo/explain-data` is the most important one really
 
 It will take a spec, a value and potentially options and return clojure.spec
 explain-data for it with extra fields added.
