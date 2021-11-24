@@ -56,13 +56,27 @@ For now it extends clojure.spec.alpha/problems with
 There are 2 ways to specify custom messages, depending on what is the
 source you start from:
 
-If you are working from spec identifiers or static forms you can use `set-spec-error!`, it will dispatch on the problem spec, potentially resolving aliases too, up to the pred failing at the end:
+If you are working from spec identifiers or static forms you can use
+`set-spec-error!`, it will dispatch on the problem spec, potentially
+resolving aliases too, up to the pred failing at the end:
 
 ``` clj
 (set-spec-error! `string? "should be a String")
 (set-spec-error! ::thing "should be a Thing")
 (set-spec-error! (s/coll-of ::thing) "should be a collection of Things")
 ```
+
+What I meant by "resolving aliases" is that for something like this
+
+``` clj
+(s/def ::foo ::bar)
+(s/def ::bar ::baz)
+```
+
+If you have a custom message on ::baz or ::bar and your value blows up
+at ::foo level, lingo will pick up the first message in the alias
+chain (so checks ::foo, then ::bar and then ::baz). Alias information
+is not data available from raw explain-data, lingo has to infer by itself.
 
 If you want to have more precise error handling based on the problem
 pred only (usually it's the best things to do) you can use `set-pred-error!`.
