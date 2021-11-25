@@ -3,18 +3,16 @@
   :url "https://github.com/exoscale/lingo"
   :dependencies [[org.clojure/clojure "1.10.2"]]
   :global-vars {*warn-on-reflection* true}
-  :deploy {:repositories [["private" {:url "s3p://exo-artifacts/releases"
-                                      :no-auth true
-                                      :sign-releases false}]]}
+
   :repositories [["exoscale" {:url "https://artifacts.exoscale.ch"}]]
-  :deploy-repositories [["releases" {:url           "s3p://exo-artifacts/releases"
-                                     :no-auth       true
+  :deploy-repositories [["releases" {:url "s3p://exo-artifacts/releases"
+                                     :no-auth true
                                      :sign-releases false}]]
   :release-tasks [["vcs" "assert-committed"]
                   ["change" "version" "leiningen.release/bump-version" "release"]
                   ["vcs" "commit"]
                   ["vcs" "tag" "--no-sign"]
-                  ["deploy" "clojars"]
+                  ["deploy"]
                   ["change" "version" "leiningen.release/bump-version"]
                   ["vcs" "commit"]
                   ["vcs" "push"]])
