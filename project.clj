@@ -15,4 +15,5 @@
                   ["deploy"]
                   ["change" "version" "leiningen.release/bump-version"]
                   ["vcs" "commit"]
-                  ["vcs" "push"]])
+                  ["vcs" "push"]]
+  :plugins [[exoscale/sos-wagon-private "1.3.2-exoscale8"]])
