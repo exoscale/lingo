@@ -27,32 +27,37 @@
                    ;; use (memoize s/conform) for fast lookup
                    :conform s/conform})
 
+(defn explain-data*
+  [explain-data opts]
+  (let [opts (into default-opts opts)]
+    (update explain-data
+            :clojure.spec.alpha/problems
+            (fn [pbs]
+              (map (fn [{:keys [pred _val _reason via in _spec _path] :as pb}]
+                     (let [spec (last via)
+                           path (impl/path-str in)]
+                       (cond-> (assoc pb
+                                      :exoscale.lingo/message
+                                      (or
+                                       ;; first try to find a custom error for this specific
+                                       ;; `spec` key (and potential aliases)
+                                       (impl/find-ident-error-message spec opts)
+                                       ;; try to find message for `pred` via custom error
+                                       ;; first and then using the matcher if that fails
+                                       (impl/find-pred-error-message pred opts)
+                                       ;; all failed, return abreviated pred form
+                                       (impl/abbrev pred)))
+                         path
+                         (assoc :exoscale.lingo/path path))))
+                   (sort-by #(- (count (:path %)))
+                            pbs))))))
+
 (defn explain-data
   ([spec value]
    (explain-data spec value nil))
   ([spec value opts]
-   (let [opts (into default-opts opts)]
-     (some-> (s/explain-data spec value)
-             (update :clojure.spec.alpha/problems
-                     (fn [pbs]
-                       (map (fn [{:keys [pred _val _reason via in _spec _path] :as pb}]
-                              (let [spec (last via)
-                                    path (impl/path-str in)]
-                                (cond-> (assoc pb
-                                               :exoscale.lingo/message
-                                               (or
-                                                ;; first try to find a custom error for this specific
-                                                ;; `spec` key (and potential aliases)
-                                                (impl/find-ident-error-message spec opts)
-                                                ;; try to find message for `pred` via custom error
-                                                ;; first and then using the matcher if that fails
-                                                (impl/find-pred-error-message pred opts)
-                                                ;; all failed, return abreviated pred form
-                                                (impl/abbrev pred)))
-                                  path
-                                  (assoc :exoscale.lingo/path path))))
-                            (sort-by #(- (count (:path %)))
-                                     pbs))))))))
+   (some-> (s/explain-data spec value)
+           (explain-data* opts))))
 
 (defn explain
   "Like spec explain, but uses lingo printer"
