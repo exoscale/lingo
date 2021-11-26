@@ -59,6 +59,10 @@
     ""
     "\"\" is invalid - should contain more than 3 elements\n"
 
+    (s/def ::cnt #(> (count %) 3))
+    ""
+    "\"\" is an invalid :exoscale.lingo.test.core-test/cnt - should contain more than 3 elements\n"
+
     ;; test the original unchanged msg
     (s/and string? #(pos? (count %)))
     ""

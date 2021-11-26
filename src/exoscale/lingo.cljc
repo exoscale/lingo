@@ -133,56 +133,58 @@
                         :key any?)
                  #(impl/format "missing key %s" (:key %)))
 
+(s/def ::count+arg (s/spec (s/cat :_ #{'count} :sym simple-symbol?)))
+
 (set-pred-error! (s/cat :_op #{'<=}
                         :min number?
-                        :_cnt #{'(count %)}
+                        :_cnt ::count+arg
                         :_max #{'Integer/MAX_VALUE})
                  #(impl/format "should contain at least %s elements"
-                          (:min %)))
+                               (:min %)))
 
 (set-pred-error! (s/cat :_op #{'>=}
                         :_zero #{0}
-                        :_cnt #{'(count %)}
+                        :_cnt ::count+arg
                         :max number?)
                  #(impl/format "should contain at most %s elements"
-                          (:max %)))
+                               (:max %)))
 
 (set-pred-error! (s/cat :_op #{'<=}
                         :min number?
-                        :_cnt #{'(count %)}
+                        :_cnt ::count+arg
                         :max number?)
                  #(impl/format "should contain between %s %s elements"
-                          (:min %)
-                          (:max %)))
+                               (:min %)
+                               (:max %)))
 
 (set-pred-error! (s/or :count-1
                        (s/cat :op #{'= '< '> '<= '>= 'not=}
-                              :_ #{'(count %)}
+                              :_ ::count+arg
                               :x any?)
                        :count-2 (s/cat :op #{'= '< '> '<= '>= 'not=}
                                        :x number?
-                                       :_ #{'(count %)}))
+                                       :_ ::count+arg))
                  (fn [[_ {:keys [op x]}]]
                    (impl/format "should contain %s %s %s"
-                           (case op
-                             not= "not ="
-                             = "exactly"
-                             > "more than"
-                             < "less than"
-                             >= "at least"
-                             <= "at most")
-                           x
-                           (if (= 1 x)
-                             "element"
-                             "elements"))))
+                                (case op
+                                  not= "not ="
+                                  = "exactly"
+                                  > "more than"
+                                  < "less than"
+                                  >= "at least"
+                                  <= "at most")
+                                x
+                                (if (= 1 x)
+                                  "element"
+                                  "elements"))))
 
 (set-pred-error! (s/or :count-1
                        (s/cat :op #{'= '< '> '<= '>= 'not=}
-                              :_ #{'%}
+                              :_ simple-symbol?
                               :x any?)
                        :count-2 (s/cat :op #{'= '< '> '<= '>= 'not=}
                                        :x any?
-                                       :_ #{'%}))
+                                       :_ simple-symbol?))
                  (fn [[_ {:keys [op x]}]]
                    (impl/format "should %s %s"
                                 (case op
@@ -197,7 +199,7 @@
 (set-pred-error! (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
                         :min number?
                         :max number?
-                        :_ #{'%})
+                        :_ simple-symbol?)
                  (fn [{:keys [min max]}]
                    (impl/format "should be an Integer between %d %d" min max)))
 
