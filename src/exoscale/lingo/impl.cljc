@@ -69,7 +69,7 @@
                             (symbol "clojure.core" (name pred'))
                             pred') ; special case we need to expand the :pred value
                           @registry)
-      (find-registry-pred-message (abbrev pred')
+      (find-registry-pred-message pred'
                                   opts))))
 
 (defn find-ident-error-message
