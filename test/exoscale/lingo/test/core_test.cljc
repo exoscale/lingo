@@ -200,6 +200,10 @@
     1
     "1 is invalid - should be nil\n"
 
+    (s/nilable string?)
+    1
+    "1 is invalid - should be a String\n1 is invalid - should be nil\n"
+
     f2?
     1
     "1 is invalid - yolo\n"
