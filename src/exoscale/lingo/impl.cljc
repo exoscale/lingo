@@ -43,7 +43,7 @@
                          (strip-core form)
 
                          (and (seq? form)
-                              (= 'fn (first form)))
+                              (contains? #{'fn 'fn*} (first form)))
                          (last form)
                          :else form))))))
 
