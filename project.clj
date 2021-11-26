@@ -6,7 +6,7 @@
 
   :url "https://github.com/exoscale/lingo"
 
-  :dependencies [[org.clojure/clojure "1.10.2"]]
+  :dependencies [[org.clojure/clojure "1.10.3"]]
 
   :global-vars {*warn-on-reflection* true}
 
