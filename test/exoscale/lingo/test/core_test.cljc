@@ -77,7 +77,7 @@
 
     #{:a :b :c}
     "b"
-    "\"b\" is invalid - should be one of :a,:b,:c\n"
+    "\"b\" is invalid - should be one of :a, :b, :c\n"
 
     ;; (s/and string? #(xss/string-of* % {:blank? false :min-length 3 :max-length 10}))
     ;; ""
@@ -194,7 +194,7 @@
 
     (s/def :foo/animal #{:a :b :c})
     1
-    "1 is an invalid :foo/animal - should be one of :a,:b,:c\n"
+    "1 is an invalid :foo/animal - should be one of :a, :b, :c\n"
 
     :foo/person
     {:names [1 :yolo]}

@@ -126,7 +126,7 @@
 
 ;; pred errors
 
-(set-pred-error! set? #(impl/format "should be one of %s" (str/join "," (sort %))))
+(set-pred-error! set? #(impl/format "should be one of %s" (str/join ", " (sort %))))
 
 (set-pred-error! (s/cat :pred #{'contains?}
                         :arg any?
