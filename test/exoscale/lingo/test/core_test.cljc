@@ -138,6 +138,10 @@
     -1
     "-1 is invalid - should be an Integer between 0 10\n"
 
+    (s/and number? #(<= 0 % 10))
+    -1
+    "-1 is invalid - should be an Integer between 0 10\n"
+
     (s/double-in :min 0 :max 10)
     (double 11)
     "11.0 is invalid - should be at most 10\n"

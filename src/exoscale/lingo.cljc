@@ -196,12 +196,17 @@
                                   <= "be at most")
                                 x)))
 
-(set-pred-error! (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
-                        :min number?
-                        :max number?
-                        :_ simple-symbol?)
-                 (fn [{:keys [min max]}]
+(set-pred-error! (s/or :_ (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
+                                 :min number?
+                                 :max number?
+                                 :_ simple-symbol?)
+                       :_ (s/cat :_ #{'<=}
+                                 :min number?
+                                 :_ simple-symbol?
+                                 :max number?))
+                 (fn [[_ {:keys [min max]}]]
                    (impl/format "should be an Integer between %d %d" min max)))
+
 
 #_(set-pred-explain! (s/cat :_ #{'exoscale.specs.string/string-of*}
                             :_ #{'%}
