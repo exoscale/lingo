@@ -35,20 +35,17 @@
             (fn [pbs]
               (map (fn [{:keys [pred _val _reason via in _spec _path] :as pb}]
                      (let [spec (last via)
-                           path (impl/path-str in)]
-                       (cond-> (assoc pb
-                                      :exoscale.lingo/message
-                                      (or
-                                       ;; first try to find a custom error for this specific
-                                       ;; `spec` key (and potential aliases)
-                                       (impl/find-ident-error-message spec opts)
-                                       ;; try to find message for `pred` via custom error
-                                       ;; first and then using the matcher if that fails
-                                       (impl/find-pred-error-message pred opts)
-                                       ;; all failed, return abreviated pred form
-                                       (impl/abbrev pred)))
-                         path
-                         (assoc :exoscale.lingo/path path))))
+                           path (impl/path-str in)
+                           msg (or
+                                ;; first try to find a custom error for this specific
+                                ;; `spec` key (and potential aliases)
+                                (impl/find-ident-error-message spec opts)
+                                ;; try to find message for `pred` via custom error
+                                ;; first and then using the matcher if that fails
+                                (impl/find-pred-error-message pred opts))]
+                       (cond-> pb
+                         msg (assoc :exoscale.lingo/message msg)
+                         path (assoc :exoscale.lingo/path path))))
                    (sort-by #(- (count (:path %)))
                             pbs))))))
 
@@ -66,7 +63,7 @@
    (if-let [{:as _ed :clojure.spec.alpha/keys [problems]} (explain-data spec value opts)]
      (doseq [{:as _problem
               :exoscale.lingo/keys [message]
-              :keys [via in val]} problems
+              :keys [via in val pred]} problems
              :let [spec (last via)]]
        (print (pr-str val))
 
@@ -78,7 +75,7 @@
          (print " is invalid"))
 
        (print " - ")
-       (print message)
+       (print (or message (impl/abbrev pred)))
        (newline))
 
      (println "Success!"))))
