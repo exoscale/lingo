@@ -64,11 +64,13 @@
 (defn find-pred-error-message
   [pred {:exoscale.lingo/keys [registry] :as opts}]
   (let [pred' (abbrev pred)]
-    (if (ident? pred)
+    (cond
+      (ident? pred)
       (spec-error-message (if (simple-symbol? pred')
                             (symbol "clojure.core" (name pred'))
                             pred') ; special case we need to expand the :pred value
                           @registry)
+      (sequential? pred)
       (find-registry-pred-message pred'
                                   opts))))
 
