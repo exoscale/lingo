@@ -121,13 +121,14 @@
 (set-spec-error! `some? "should be Non-nil")
 (set-spec-error! `nil? "should be nil")
 
+
 ;; pred errors
 
 (set-pred-error! set? #(impl/format "should be one of %s" (str/join ", " (sort %))))
 
 (set-pred-error! (s/cat :pred #{'contains?}
-                        :arg any?
-                        :key any?)
+                        :arg #{'%}
+                        :key keyword?)
                  #(impl/format "missing key %s" (:key %)))
 
 (s/def ::count+arg (s/spec (s/cat :_ #{'count} :sym simple-symbol?)))
