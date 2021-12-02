@@ -70,7 +70,7 @@
                             (symbol "clojure.core" (name pred'))
                             pred') ; special case we need to expand the :pred value
                           @registry)
-      (sequential? pred)
+      (or (sequential? pred) (set? pred))
       (find-registry-pred-message pred'
                                   opts))))
 
