@@ -30,8 +30,10 @@
   (println "-------------------------")
   (l/explain-data ::things 1))
 
+(def ^:dynamic *opts* {})
+
 (deftest test-outputs
-  (are [spec val output] (= (l/explain-str spec val)
+  (are [spec val output] (= (l/explain-str spec val *opts*)
                             output)
 
     ::thing
@@ -182,7 +184,20 @@
     {:age 10}
     "{:age 10} is an invalid :foo/agent - missing key :person\n"
 
-    (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age]))
+    (s/def :foo/agent (s/keys :req [:foo/person :foo/age]))
+    {:foo/age 10}
+    "#:foo{:age 10} is an invalid :foo/agent - missing key :foo/person\n"
+
+
+    (do
+      (alter-var-root #'*opts* assoc :hide-keyword-namespaces? true)
+      (s/def :foo/agent (s/keys :req [:foo/person :foo/age])))
+    {:foo/age 10}
+    "#:foo{:age 10} is an invalid :foo/agent - missing key :person\n"
+
+    (do
+      (alter-var-root #'*opts* dissoc :hide-keyword-namespaces?)
+      (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age])))
     {:age 10 :person {:names [1]}}
     "1 in `person.names[0]` is an invalid :foo/name - should be a String\n"
 

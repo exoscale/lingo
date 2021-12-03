@@ -20,11 +20,11 @@
     (-> name symbol)))
 
 (defn find-registry-pred-message
-  [x {:as _opts :exoscale.lingo/keys [registry conform]}]
+  [x {:as opts :exoscale.lingo/keys [registry conform]}]
   (reduce (fn [_ [k formater]]
             (when-let [match (conform k x)]
               (when (not= match :clojure.spec.alpha/invalid)
-                (reduced (formater match)))))
+                (reduced (formater match opts)))))
           nil
           (get @registry :exoscale.lingo/preds)))
 
