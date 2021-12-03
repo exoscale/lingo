@@ -86,7 +86,7 @@ pred only (usually it's the best things to do) you can use `set-pred-error!`.
                         :min number?
                         :max number?
                         :_ #{'%})
-                 (fn [{:keys [min max]}]
+                 (fn [{:keys [min max]} _opts]
                    (format "should be an Integer between %d %d" min max)))
 ```
 
@@ -127,7 +127,7 @@ Which will destructure it to `{:min 0 :max 3}` and call the following
 function on it.
 
 ``` clj
-(fn [{:keys [min max]}]
+(fn [{:keys [min max]} _opts]
    (format "should be an Integer between %d %d" min max))
 ```
 
