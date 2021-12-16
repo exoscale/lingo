@@ -1,6 +1,7 @@
 (ns exoscale.lingo.test.core-test
-  (:require [clojure.test :refer [are deftest]]
+  (:require [clojure.test :refer [are deftest is]]
             [exoscale.lingo :as l]
+            [exoscale.lingo.utils :as u]
             ;; [exoscale.specs.string :as xss]
             [clojure.spec.alpha :as s]))
 
@@ -230,3 +231,30 @@
     f3?
     1
     "1 is invalid - should match Something\n"))
+
+(deftest focus-test
+  (let [_ '_]
+    (is (= [_ _ 1] (u/focus [3 2 1] [[2]])))
+
+    (is (= [3 _ 1] (u/focus [3 2 1] [[0] [2]])))
+
+    (is (= {:a _} (u/focus {:a 1} [:a])))
+
+    (is (= {:a {:b [1 {:c {:d #{:b :a}, :e _}}]}}
+           (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+                    [[:a :b 0]
+                     [:a :b 1 :c :d]])))
+
+    (is (= {:a {:b [1 {:c {:d #{_}, :e _}}]}}
+           (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+                    [[:a :b 0]])))
+
+    (is (= {:a {:b [_ {:c {:d #{_}, :e _}}]}}
+           (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+                    [])))
+
+    (is (= {:a {:b [_ {:c {:d #{_}, :e _}}]}}
+           (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+                    nil)))
+
+    (is (= _ (u/focus 1 [])))))
