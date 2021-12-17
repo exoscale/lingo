@@ -234,27 +234,43 @@
 
 (deftest focus-test
   (let [_ '_]
-    (is (= [_ _ 1] (u/focus [3 2 1] [[2]])))
+    (is (= _ (u/focus [3 2 1] nil)))
+    (is (= _ (u/focus 1 [])))
+    (is (= 1 (u/focus 1 [[]])))
+    (is (= _ (u/focus 1 [nil])))
 
+    (is (= [_ _ 1] (u/focus [3 2 1] [[2]])))
     (is (= [3 _ 1] (u/focus [3 2 1] [[0] [2]])))
 
-    (is (= {:a _} (u/focus {:a 1} [:a])))
+    (is (= {:a 1} (u/focus {:a 1} [[:a]])))
+    (is (= {:a _} (u/focus {:a 1} [[:b]])))
+    (is (= {:a _ :c 1} (u/focus {:a {:b 1} :c 1} [[:c]])))
 
     (is (= {:a {:b [1 {:c {:d #{:b :a}, :e _}}]}}
            (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
                     [[:a :b 0]
-                     [:a :b 1 :c :d]])))
+                     [:a :b 1 :c :d]]
+                    {:descend-mismatching-nodes? true})))
 
     (is (= {:a {:b [1 {:c {:d #{_}, :e _}}]}}
            (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+                    [[:a :b 0]]
+                    {:descend-mismatching-nodes? true})))
+
+    (is (= {:a {:b [_ {:c {:d #{_}, :e _}}]}}
+           (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+                    []
+                    {:descend-mismatching-nodes? true})))
+
+    (is (= {:a {:b [_ {:c {:d #{_}, :e _}}]}}
+           (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+                    nil
+                    {:descend-mismatching-nodes? true})))
+
+    (is (= {:a {:b [1 _]}}
+           (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
                     [[:a :b 0]])))
 
-    (is (= {:a {:b [_ {:c {:d #{_}, :e _}}]}}
-           (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-                    [])))
-
-    (is (= {:a {:b [_ {:c {:d #{_}, :e _}}]}}
-           (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-                    nil)))
-
-    (is (= _ (u/focus 1 [])))))
+    (is (= {:a {:b [_ {:c {:d #{:b :a} :e _}}]}}
+           (u/focus {:a {:b [1 {:c {:d #{:b :a} :e {:f 1}}}]}}
+                    [[:a :b 1 :c :d]])))))

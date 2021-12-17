@@ -1,5 +1,10 @@
 (ns exoscale.lingo.utils)
 
+(defn- subpath?
+  "True'ish if `x` is a subpath of `y`. Could use subvec but will do for now"
+  [x y]
+  (= (take (count x) y) x))
+
 (defn focus
   "Takes a value, runs `mismatch-fn` on all values that are not in `paths` and
   runs `match-fn` on all values that are in `paths`. This is usefull to create
@@ -14,7 +19,7 @@
           (set paths)
           opts
           []))
-  ([m paths {:keys [mismatch-fn match-fn]
+  ([m paths {:keys [mismatch-fn match-fn descend-mismatching-nodes?]
              :or {mismatch-fn (constantly '_)
                   match-fn identity}
              :as opts}
@@ -22,6 +27,10 @@
    (cond
      (contains? paths current-path)
      (match-fn m)
+
+     (and (not descend-mismatching-nodes?)
+          (not (some #(subpath? current-path %) paths)))
+     (mismatch-fn m)
 
      (map? m)
      (into (empty m)
