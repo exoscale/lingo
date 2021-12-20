@@ -27,27 +27,47 @@
                    ;; use (memoize s/conform) for fast lookup
                    :conform s/conform})
 
+(defn x-extend-data
+  [opts]
+  (map (fn [{:keys [pred via] :as pb}]
+         (let [spec (last via)
+               ident-data (impl/find-ident-data spec opts)
+               pred-data (impl/find-pred-data pred opts)]
+           (cond-> pb
+             pred-data (into pred-data)
+             ident-data (into ident-data))))))
+
+(defn x-extend-msg
+  [_opts]
+  (map (fn [pb]
+         (let [msg (or
+                    ;; first try to find a custom error for this specific
+                    ;; `spec` key (and potential aliases)
+                    (:exoscale.lingo.ident/msg pb)
+                    ;; try to find message for `pred` via custom error
+                    ;; first and then using the matcher if that fails
+                    (:exoscale.lingo.pred/msg pb))]
+           (cond-> pb
+             msg (assoc :exoscale.lingo/message msg))))))
+
+(defn x-extend-path
+  [_opts]
+  (map (fn [{:keys [in] :as pb}]
+         (let [path (impl/path-str in)]
+           (cond-> pb
+             path (assoc :exoscale.lingo/path path))))))
+
 (defn explain-data*
   [explain-data opts]
   (let [opts (into default-opts opts)]
     (update explain-data
             :clojure.spec.alpha/problems
             (fn [pbs]
-              (map (fn [{:keys [pred _val _reason via in _spec _path] :as pb}]
-                     (let [spec (last via)
-                           path (impl/path-str in)
-                           msg (or
-                                ;; first try to find a custom error for this specific
-                                ;; `spec` key (and potential aliases)
-                                (impl/find-ident-error-message spec opts)
-                                ;; try to find message for `pred` via custom error
-                                ;; first and then using the matcher if that fails
-                                (impl/find-pred-error-message pred opts))]
-                       (cond-> pb
-                         msg (assoc :exoscale.lingo/message msg)
-                         path (assoc :exoscale.lingo/path path))))
-                   (sort-by #(- (count (:path %)))
-                            pbs))))))
+              (sequence (comp (x-extend-data opts)
+                              (x-extend-msg opts)
+                              (x-extend-path opts))
+                        (sort-by #(- (count (:path %)))
+                                 pbs))))))
 
 (defn explain-data
   ([spec value]
