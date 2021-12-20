@@ -1,6 +1,7 @@
 (ns exoscale.lingo
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
+            [exoscale.lingo.utils :as u]
             [exoscale.lingo.impl :as impl]))
 
 (def registry-ref (atom #:exoscale.lingo{:specs {} :preds {}}))
@@ -25,7 +26,8 @@
 (def default-opts
   #:exoscale.lingo{:registry registry-ref
                    ;; use (memoize s/conform) for fast lookup
-                   :conform s/conform})
+                   :conform s/conform
+                   :highlight? false})
 
 (defn x-extend-data
   [opts]
@@ -57,15 +59,26 @@
            (cond-> pb
              path (assoc :exoscale.lingo/path path))))))
 
+(defn x-highlight
+  [val _opts]
+  (map (fn [{:keys [in] :as pb}]
+         (let [highlight (u/focus val [in])]
+           (cond-> pb
+             (seq in) (assoc :exoscale.lingo/highlight highlight))))))
+
 (defn explain-data*
-  [explain-data opts]
+  [{:as explain-data :clojure.spec.alpha/keys [value]}
+   {:as opts :keys [highlight?]}]
   (let [opts (into default-opts opts)]
     (update explain-data
             :clojure.spec.alpha/problems
             (fn [pbs]
               (sequence (comp (x-extend-data opts)
                               (x-extend-msg opts)
-                              (x-extend-path opts))
+                              (x-extend-path opts)
+                              (if highlight?
+                                (x-highlight value opts)
+                                identity))
                         (sort-by #(- (count (:path %)))
                                  pbs))))))
 
