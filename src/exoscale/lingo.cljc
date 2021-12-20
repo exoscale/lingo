@@ -147,9 +147,10 @@
 (set-pred-error! set? (fn [st _opts]
                         (impl/format "should be one of %s" (str/join ", " (sort st)))))
 
-(set-pred-error! (s/cat :pred #{'contains?}
-                        :arg #{'%}
-                        :key keyword?)
+(set-pred-error! (s/def :exoscale.lingo/contains-key
+                   (s/cat :pred #{'contains?}
+                          :arg #{'%}
+                          :key keyword?))
                  (fn [{:keys [key]} opts]
                    (impl/format "missing key %s"
                                 (cond-> key
@@ -158,37 +159,41 @@
 
 (s/def ::count+arg (s/spec (s/cat :_ #{'count} :sym simple-symbol?)))
 
-(set-pred-error! (s/cat :_op #{'<=}
-                        :min number?
-                        :_cnt ::count+arg
-                        :_max #{'Integer/MAX_VALUE})
+(set-pred-error! (s/def :exoscale.lingo/gte-count
+                   (s/cat :_op #{'<=}
+                          :min number?
+                          :_cnt ::count+arg
+                          :_max #{'Integer/MAX_VALUE}))
                  (fn [{:keys [min]} _opts]
                    (impl/format "should contain at least %s elements"
                                 min)))
 
-(set-pred-error! (s/cat :_op #{'>=}
-                        :_zero #{0}
-                        :_cnt ::count+arg
-                        :max number?)
+(set-pred-error! (s/def :exoscale.lingo/lte-count
+                   (s/cat :_op #{'>=}
+                          :_zero #{0}
+                          :_cnt ::count+arg
+                          :max number?))
                  (fn [{:keys [max _opts]}]
                    (impl/format "should contain at most %s elements"
                                 max)))
 
-(set-pred-error! (s/cat :_op #{'<=}
-                        :min number?
-                        :_cnt ::count+arg
-                        :max number?)
+(set-pred-error! (s/def :exoscale.lingo/between-count
+                   (s/cat :_op #{'<=}
+                          :min number?
+                          :_cnt ::count+arg
+                          :max number?))
                  (fn [{:keys [min max]} _opts]
                    (impl/format "should contain between %s %s elements"
                                 min max)))
 
-(set-pred-error! (s/or :count-1
-                       (s/cat :op #{'= '< '> '<= '>= 'not=}
-                              :_ ::count+arg
-                              :x any?)
-                       :count-2 (s/cat :op #{'= '< '> '<= '>= 'not=}
-                                       :x number?
-                                       :_ ::count+arg))
+(set-pred-error! (s/def :exoscale.lingo/compare-count
+                   (s/or :count-1
+                         (s/cat :op #{'= '< '> '<= '>= 'not=}
+                                :_ ::count+arg
+                                :x any?)
+                         :count-2 (s/cat :op #{'= '< '> '<= '>= 'not=}
+                                         :x number?
+                                         :_ ::count+arg)))
                  (fn [[_ {:keys [op x]}] _opts]
                    (impl/format "should contain %s %s %s"
                                 (case op
@@ -203,13 +208,14 @@
                                   "element"
                                   "elements"))))
 
-(set-pred-error! (s/or :count-1
-                       (s/cat :op #{'= '< '> '<= '>= 'not=}
-                              :_ simple-symbol?
-                              :x any?)
-                       :count-2 (s/cat :op #{'= '< '> '<= '>= 'not=}
-                                       :x any?
-                                       :_ simple-symbol?))
+(set-pred-error! (s/def :exoscale.lingo/num-compare
+                   (s/or :count-1
+                         (s/cat :op #{'= '< '> '<= '>= 'not=}
+                                :_ simple-symbol?
+                                :x any?)
+                         :count-2 (s/cat :op #{'= '< '> '<= '>= 'not=}
+                                         :x any?
+                                         :_ simple-symbol?)))
                  (fn [[_ {:keys [op x]}] _opts]
                    (impl/format "should %s %s"
                                 (case op
@@ -221,14 +227,15 @@
                                   <= "be at most")
                                 x)))
 
-(set-pred-error! (s/or :_ (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
-                                 :min number?
-                                 :max number?
-                                 :_ simple-symbol?)
-                       :_ (s/cat :_ #{'<=}
-                                 :min number?
-                                 :_ simple-symbol?
-                                 :max number?))
+(set-pred-error! (s/def :exoscale.lingo/int-in-range
+                   (s/or :_ (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
+                                   :min number?
+                                   :max number?
+                                   :_ simple-symbol?)
+                         :_ (s/cat :_ #{'<=}
+                                   :min number?
+                                   :_ simple-symbol?
+                                   :max number?)))
                  (fn [[_ {:keys [min max]}] _opts]
                    (impl/format "should be an Integer between %d %d" min max)))
 
