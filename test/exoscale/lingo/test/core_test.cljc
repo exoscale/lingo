@@ -234,32 +234,25 @@
 
 (deftest focus-test
   (let [_ '_]
-    (is (= _ (u/focus [3 2 1] nil)))
-    (is (= _ (u/focus 1 [])))
-    (is (= 1 (u/focus 1 [[]])))
-    (is (= _ (u/focus 1 [nil])))
+    (is (= [_ _ _] (u/focus [3 2 1] nil)))
+    (is (= _ (u/focus 1 nil)))
+    (is (= 1 (u/focus 1 [])))
 
-    (is (= [_ _ 1] (u/focus [3 2 1] [[2]])))
-    (is (= [3 _ 1] (u/focus [3 2 1] [[0] [2]])))
+    (is (= [_ _ 1] (u/focus [3 2 1] [2])))
+    (is (= [3 _ _] (u/focus [3 2 1] [0])))
 
-    (is (= {:a 1} (u/focus {:a 1} [[:a]])))
-    (is (= {:a _} (u/focus {:a 1} [[:b]])))
-    (is (= {:a _ :c 1} (u/focus {:a {:b 1} :c 1} [[:c]])))
+    (is (= {:a 1} (u/focus {:a 1} [:a])))
+    (is (= {:a _} (u/focus {:a 1} [:b])))
+    (is (= {:a _ :c 1} (u/focus {:a {:b 1} :c 1} [:c])))
 
-    (is (= {:a {:b [1 {:c {:d #{:b :a}, :e _}}]}}
+    (is (= {:a {:b [_ {:c {:d #{:b :a}, :e _}}]}}
            (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-                    [[:a :b 0]
-                     [:a :b 1 :c :d]]
+                    [:a :b 1 :c :d]
                     {:descend-mismatching-nodes? true})))
 
     (is (= {:a {:b [1 {:c {:d #{_}, :e _}}]}}
            (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-                    [[:a :b 0]]
-                    {:descend-mismatching-nodes? true})))
-
-    (is (= {:a {:b [_ {:c {:d #{_}, :e _}}]}}
-           (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-                    []
+                    [:a :b 0]
                     {:descend-mismatching-nodes? true})))
 
     (is (= {:a {:b [_ {:c {:d #{_}, :e _}}]}}
@@ -269,8 +262,53 @@
 
     (is (= {:a {:b [1 _]}}
            (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-                    [[:a :b 0]])))
+                    [:a :b 0])))
 
     (is (= {:a {:b [_ {:c {:d #{:b :a} :e _}}]}}
            (u/focus {:a {:b [1 {:c {:d #{:b :a} :e {:f 1}}}]}}
-                    [[:a :b 1 :c :d]])))))
+                    [:a :b 1 :c :d])))))
+
+(deftest highlight-test
+  (are [input path output]
+      (= (u/highlight input path)
+         output)
+
+    [3 2 1] [2] "[_ _ 1]\n     ^"
+
+    [3 2 1] [0] "[3 _ _]\n ^"
+
+    {:a 1} [:a] "{:a 1}\n    ^"
+
+    {:a {:b 1} :c 1} [:c] "{:a _, :c 1}\n          ^"
+
+    {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+    [:a :b 1 :c :d]
+    "{:a {:b [_ {:c {:d #{:b :a}, :e _}}]}}\n                   ^^^^^^^^"
+
+    {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+    [:a :b 0]
+    "{:a {:b [1 _]}}\n         ^"
+
+    {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+    nil
+    "{:a _}\n^^^^^^"
+
+    {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+    [:a :b 0]
+    "{:a {:b [1 _]}}\n         ^"
+
+    {:a {:b [1 {:c {:d #{:b :a} :e {:f 1}}}]}}
+    [:a :b 1 :c :d]
+    "{:a {:b [_ {:c {:d #{:b :a}, :e _}}]}}\n                   ^^^^^^^^"
+
+    ;; single line hl
+    {:a {:bar 255555 :c 3 :d 4 :e 5}}
+    [:a :bar]
+    "{:a {:bar 255555, :c _, :d _, :e _}}\n          ^^^^^^"
+
+    ;; multiline hl output
+    {:aaaaaaaaaaaaa
+     {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
+    [:aaaaaaaaaaaaa
+     :c]
+    "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}\n"))

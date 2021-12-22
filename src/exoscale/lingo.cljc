@@ -62,7 +62,7 @@
 (defn x-highlight
   [val _opts]
   (map (fn [{:keys [in] :as pb}]
-         (let [highlight (u/focus val [in])]
+         (let [highlight (u/highlight val in)]
            (cond-> pb
              (seq in) (assoc :exoscale.lingo/highlight highlight))))))
 
