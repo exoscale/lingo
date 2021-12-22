@@ -54,23 +54,21 @@
            m)
      :else (mismatch-fn m))))
 
+(defn- zget-in
+  [zloc ks]
+  (loop [zloc zloc
+         [k & ks] ks]
+    (if k
+      (recur (z/get zloc k) ks)
+      zloc)))
+
 (defn highlight
   [m path]
   (let [m-str (with-out-str (pp/pprint (focus m path)))
         zloc (z/of-string m-str {:track-position? true})
-        ;; check if the last token is still on the same line, if
-        ;; that the case we can skip the new line after the carret
-        [num-lines _] (z/position (z/rightmost* zloc))
-        _ (z/up zloc)
-        zget-in (fn [zloc ks]
-                  (loop [zloc zloc
-                         [k & ks] ks]
-                    (if k
-                      (recur (z/get zloc k)
-                             ks)
-                      zloc)))]
+        num-lines (-> zloc z/rightmost* z/position first)]
     (when-let [zloc (zget-in zloc path)]
-      (let [val-idx (second (z/position zloc))
+      (let [val-idx (-> zloc z/position second)
             val-len (count (str (z/sexpr zloc)))
             marker (->> (concat (repeat (- val-idx 1)
                                         " ")
@@ -82,11 +80,9 @@
           (str m-str marker)
           ;; more than 1 line, we must insert the marker between lines
           ;; and realign
-          (some-> (z/skip z/next
-                          z/linebreak?
-                          zloc)
-                  z/next*
-                  (z/insert-right* (zn/coerce marker))
-                  (z/next)
-                  (z/insert-newline-left)
-                  (z/root-string)))))))
+          (some-> (z/skip z/next z/linebreak? zloc) ; go to end of line
+                  z/next* ; skip lf
+                  (z/insert-right* (zn/coerce marker)) ; insert marker
+                  z/next ; skip marker
+                  z/insert-newline-left
+                  z/root-string))))))
