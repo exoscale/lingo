@@ -290,10 +290,6 @@
     "{:a {:b [1 _]}}\n         ^"
 
     {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-    nil
-    "{:a _}\n^^^^^^"
-
-    {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
     [:a :b 0]
     "{:a {:b [1 _]}}\n         ^"
 
@@ -311,4 +307,4 @@
      {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
     [:aaaaaaaaaaaaa
      :c]
-    "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}\n"))
+    "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}"))

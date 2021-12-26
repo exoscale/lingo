@@ -92,10 +92,11 @@
 (defn explain
   "Like spec explain, but uses lingo printer"
   ([spec value] (explain spec value nil))
-  ([spec value opts]
-   (if-let [{:as _ed :clojure.spec.alpha/keys [problems]} (explain-data spec value opts)]
+  ([spec value {:as opts :keys [highlight?]}]
+   (if-let [{:as _ed
+             :clojure.spec.alpha/keys [problems]} (explain-data spec value opts)]
      (doseq [{:as _problem
-              :exoscale.lingo/keys [message]
+              :exoscale.lingo/keys [message highlight]
               :keys [via in val pred]} problems
              :let [spec (last via)]]
        (print (pr-str val))
@@ -109,7 +110,11 @@
 
        (print " - ")
        (print (or message (impl/abbrev pred)))
-       (newline))
+       (newline)
+
+       (when highlight?
+         (print highlight)
+         (newline)))
 
      (println "Success!"))))
 

@@ -6,8 +6,7 @@
 
   :url "https://github.com/exoscale/lingo"
 
-  :dependencies [[org.clojure/clojure "1.10.3"]
-                 [rewrite-clj "1.0.699-alpha"]]
+  :dependencies [[org.clojure/clojure "1.10.3"]]
 
   :global-vars {*warn-on-reflection* true}
 
