@@ -2,8 +2,6 @@
   (:require [clojure.pprint :as pp]
             [clojure.string :as str]))
 
-;; TODO tons of optimisations
-
 (defn- subpath?
   "True'ish if `x` is a subpath of `y`. Could use subvec but will do for now"
   [x y]
@@ -40,18 +38,12 @@
      (into (empty m)
            (map (fn [[k v]]
                   [k
-                   (focus v
-                          path
-                          opts
-                          (conj current-path k))]))
+                   (focus v path opts (conj current-path k))]))
            m)
      (coll? m)
      (into (empty m)
            (map-indexed (fn [idx x]
-                          (focus x
-                                 path
-                                 opts
-                                 (conj current-path idx))))
+                          (focus x path opts (conj current-path idx))))
            m)
      :else (mismatch-fn m))))
 
@@ -62,18 +54,16 @@
 
 (defn- marker
   [offset len]
-  (->>(concat
-       (repeat offset
-               " ")
-       (repeat len "^"))
-      (apply str)))
+  (->> (concat (repeat offset " ")
+               (repeat len "^"))
+       (apply str)))
 
 (defn- pp-str
   [x]
   (let [s (with-out-str (pp/pprint x))]
     (subs s 0 (dec (count s)))))
 
-(defn- val-width
+(defn- width
   [s]
   (reduce (fn [x l]
             (let [len (count l)]
@@ -83,42 +73,67 @@
           0
           (str/split-lines s)))
 
+(defn- pad [i]
+  (reduce string-builder
+          (string-builder)
+          (repeat i \space)))
+
 (defn- justify [s idx]
-  (let [pad (apply str (repeat idx " "))]
+  (let [pad' (pad idx)]
     (transduce (comp (map-indexed (fn [i s]
                                     (cond->> s
                                       (not (zero? i))
-                                      (str pad))))
-                     (interpose "\n"))
+                                      (str pad'))))
+                     (interpose \newline))
                string-builder
                (str/split-lines s))))
 
-(def relevant-mark :exoscale.lingo/relevant)
+(def ^:private relevant-mark 'exoscale.lingo/relevant)
+
+(defn- relevant-mark-index
+  [line]
+  (str/index-of line (str relevant-mark)))
+
+(defn- replace-mark
+  [line val idx]
+  (str/replace line
+               (str relevant-mark)
+               (justify val idx)))
+
+(defn- prep-val
+  "Replaces error value with placeholder, then pprint without newline char at the end"
+  [m in]
+  (pp-str (focus m in {:match-fn (constantly relevant-mark)})))
 
 (defn highlight
-  [m path]
-  (let [v (volatile! nil)
-        m-str (pp-str
-               (focus m
-                      path
-                      {:match-fn (fn [x]
-                                   (vreset! v x)
-                                   relevant-mark)}))
-        lines (str/split-lines m-str)
-        relevant-mark-str (str relevant-mark)]
-    (transduce (comp
-                (map (fn [line]
-                       (if-let [idx (str/index-of line relevant-mark-str)]
-                         (let [str-val (pp-str @v)]
-                           (str (str/replace line
-                                             relevant-mark-str
-                                             (justify str-val idx))
-                                "\n"
-                                (marker idx (val-width str-val))))
-                         line)))
-                (interpose "\n"))
-               string-builder
-               lines)))
+  [value
+   {:as _pb :keys [in val] :exoscale.lingo/keys [message]}
+   {:as _opts :exoscale.lingo/keys [highlight-inline-message?]}]
+  (->> (prep-val value in)
+       str/split-lines
+       (transduce (comp
+                   (map (fn [line]
+                          (if-let [idx (relevant-mark-index line)]
+                            (let [s (pp-str val)]
+                              (str (replace-mark line s idx)
+                                   \newline
+                                   (marker idx (width s))
+                                   (when (and highlight-inline-message? message)
+                                     (str \newline (pad idx) message))))
+                            line)))
+                   (interpose \newline))
+                  string-builder)))
+
+;; (print (highlight {:aaaaaaaaaaaaa
+;;                    {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2
+;;                     :c 33333
+;;                     :d '[a b c]
+;;                     :e 5
+;;                     :f 1}}
+;;                   {:in [:aaaaaaaaaaaaa
+;;                         :d]
+;;                    :exoscale.lingo/message "Should be a String"
+;;                    }))
 
 ;; (print (highlight {:aaaaaaaaaaaaa
 ;;                    {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2
@@ -126,8 +141,8 @@
 ;;                     :d 44
 ;;                     :e 5
 ;;                     :f 1}}
-;;                   [:aaaaaaaaaaaaa
-;;                    :d]))
+;;                   {:in [:aaaaaaaaaaaaa
+;;                         :d]}))
 ;; (print)
 ;; (print (highlight {:aaaaaaaaaaaaaa
 ;;                    {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2
@@ -136,5 +151,6 @@
 ;;                     :e 5
 ;;                     :f {:aaaaaaaaaaaaa
 ;;                         {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}}}
-;;                   [:aaaaaaaaaaaaaa
-;;                    :f]))
+;;                   {:in [:aaaaaaaaaaaaaa
+;;                         :f]
+;;                    :exoscale.lingo/message "Should be a string"}))

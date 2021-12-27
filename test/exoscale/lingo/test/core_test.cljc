@@ -31,7 +31,7 @@
   (println "-------------------------")
   (l/explain-data ::things 1))
 
-(def ^:dynamic *opts* {})
+(def ^:dynamic *opts* {:exoscale.lingo/highlight? false})
 
 (deftest test-outputs
   (are [spec val output] (= (l/explain-str spec val *opts*)
@@ -270,41 +270,40 @@
 
 (deftest highlight-test
   (are [input path output]
-      (= (u/highlight input path)
+      (= (u/highlight input path {})
          output)
 
-    [3 2 1] [2] "[_ _ 1]\n     ^"
+    [3 2 1] {:in [2] :val 1} "[_ _ 1]\n     ^"
 
-    [3 2 1] [0] "[3 _ _]\n ^"
+    [3 2 1] {:in [0] :val 3} "[3 _ _]\n ^"
 
-    {:a 1} [:a] "{:a 1}\n    ^"
+    {:a 1} {:in [:a] :val 1} "{:a 1}\n    ^"
 
-    {:a {:b 1} :c 1} [:c] "{:a _, :c 1}\n          ^"
+    {:a {:b 1} :c 1} {:in [:c] :val 1} "{:a _, :c 1}\n          ^"
 
     {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-    [:a :b 1 :c :d]
+    {:in [:a :b 1 :c :d] :val #{:a :b}}
     "{:a {:b [_ {:c {:d #{:b :a}, :e _}}]}}\n                   ^^^^^^^^"
 
     {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-    [:a :b 0]
+    {:in [:a :b 0] :val 1}
     "{:a {:b [1 _]}}\n         ^"
 
     {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-    [:a :b 0]
+    {:in [:a :b 0] :val 1}
     "{:a {:b [1 _]}}\n         ^"
 
     {:a {:b [1 {:c {:d #{:b :a} :e {:f 1}}}]}}
-    [:a :b 1 :c :d]
+    {:in [:a :b 1 :c :d] :val #{:b :a}}
     "{:a {:b [_ {:c {:d #{:b :a}, :e _}}]}}\n                   ^^^^^^^^"
 
     ;; single line hl
     {:a {:bar 255555 :c 3 :d 4 :e 5}}
-    [:a :bar]
+    {:in [:a :bar] :val 255555}
     "{:a {:bar 255555, :c _, :d _, :e _}}\n          ^^^^^^"
 
     ;; multiline hl output
     {:aaaaaaaaaaaaa
      {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
-    [:aaaaaaaaaaaaa
-     :c]
+    {:in [:aaaaaaaaaaaaa :c] :val 33333}
     "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}"))

@@ -27,7 +27,8 @@
   #:exoscale.lingo{:registry registry-ref
                    ;; use (memoize s/conform) for fast lookup
                    :conform s/conform
-                   :highlight? false})
+                   :highlight? true
+                   :highlight-inline-message? false})
 
 (defn x-extend-data
   [opts]
@@ -60,70 +61,84 @@
              path (assoc :exoscale.lingo/path path))))))
 
 (defn x-highlight
-  [val _opts]
+  [val opts]
   (map (fn [{:keys [in] :as pb}]
-         (let [highlight (u/highlight val in)]
-           (cond-> pb
-             (seq in) (assoc :exoscale.lingo/highlight highlight))))))
+         (cond-> pb
+           (seq in)
+           (assoc :exoscale.lingo/highlight (u/highlight val pb opts))))))
 
 (defn explain-data*
   [{:as explain-data :clojure.spec.alpha/keys [value]}
-   {:as opts :keys [highlight?]}]
-  (let [opts (into default-opts opts)]
-    (update explain-data
-            :clojure.spec.alpha/problems
-            (fn [pbs]
-              (sequence (comp (x-extend-data opts)
-                              (x-extend-msg opts)
-                              (x-extend-path opts)
-                              (if highlight?
-                                (x-highlight value opts)
-                                identity))
-                        (sort-by #(- (count (:path %)))
-                                 pbs))))))
+   {:as opts :exoscale.lingo/keys [highlight?]}]
+  (update explain-data
+          :clojure.spec.alpha/problems
+          (fn [pbs]
+            (sequence (comp (x-extend-data opts)
+                            (x-extend-msg opts)
+                            (x-extend-path opts)
+                            (if highlight?
+                              (x-highlight value opts)
+                              identity))
+                      (sort-by #(- (count (:path %)))
+                               pbs)))))
 
 (defn explain-data
   ([spec value]
    (explain-data spec value nil))
   ([spec value opts]
    (some-> (s/explain-data spec value)
-           (explain-data* opts))))
+           (explain-data* (into default-opts opts)))))
 
 (defn explain
   "Like spec explain, but uses lingo printer"
   ([spec value] (explain spec value nil))
-  ([spec value {:as opts :keys [highlight?]}]
-   (if-let [{:as _ed
-             :clojure.spec.alpha/keys [problems]} (explain-data spec value opts)]
-     (doseq [{:as _problem
-              :exoscale.lingo/keys [message highlight]
-              :keys [via in val pred]} problems
-             :let [spec (last via)]]
-       (print (pr-str val))
+  ([spec value opts]
+   (let [{:as opts :exoscale.lingo/keys [highlight?]} (into default-opts opts)]
+     (if-let [{:as _ed
+               :clojure.spec.alpha/keys [problems]} (explain-data spec value opts)]
+       (doseq [{:as _problem
+                :exoscale.lingo/keys [message highlight]
+                :keys [via in val pred]} problems
+               :let [spec (last via)]]
+         ;; (do
+         ;;   (if spec
+         ;;     (print (impl/format "Invalid %s" (pr-str spec)))
+         ;;     (print "Invalid"))
 
-       (when-not (empty? in)
-         (print (impl/format " in `%s`" (impl/path-str in))))
+         ;;   (when-not (empty? in)
+         ;;     (print (impl/format " in `%s`" (impl/path-str in))))
 
-       (if spec
-         (print (impl/format " is an invalid %s" (pr-str spec)))
-         (print " is invalid"))
+         ;;   (newline)
+         ;;   (newline)
+         ;;   (print highlight)
+         ;;   (newline)
+         ;;   (newline))
+         (print (pr-str val))
 
-       (print " - ")
-       (print (or message (impl/abbrev pred)))
-       (newline)
+         (when-not (empty? in)
+           (print (impl/format " in `%s`" (impl/path-str in))))
 
-       (when highlight?
-         (print highlight)
-         (newline)))
+         (if spec
+           (print (impl/format " is an invalid %s" (pr-str spec)))
+           (print " is invalid"))
 
-     (println "Success!"))))
+         (print " - ")
+         (print (or message (impl/abbrev pred)))
+         (newline)
+
+         (when (and highlight? highlight)
+           (newline)
+           (print highlight)
+           (newline)))
+
+       (println "Success!")))))
 
 (defn explain-str
   "Like spec explain-str, but uses lingo printer"
   ([spec x] (explain-str spec x nil))
   ([spec x opts]
    (with-out-str
-     (explain spec x opts))))
+     (explain spec x (into default-opts opts)))))
 
 ;;; Set defaults for common specs and preds
 
@@ -276,3 +291,5 @@
                                                      (conj (impl/format "exactly %d characters in length" length))
                                                      rx
                                                      (conj (impl/format "matching the regex %s" rx))))))))
+;; (explain (s/coll-of :foo/agent2) [{:a 1 :b 2} {}] {:exoscale.lingo/highlight? true})
+;; (explain (s/coll-of :foo/agent2) [{:a 1 :b 2} {}] {:exoscale.lingo/highlight? true})
