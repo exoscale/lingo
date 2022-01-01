@@ -27,10 +27,6 @@
 
 (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
 
-(do
-  (println "-------------------------")
-  (l/explain-data ::things 1))
-
 (def ^:dynamic *opts* {:highlight? false})
 
 (deftest test-outputs
@@ -306,7 +302,12 @@
     {:aaaaaaaaaaaaa
      {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
     {:in [:aaaaaaaaaaaaa :c] :val 33333}
-    "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}"))
+    "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}")
+  (is (= ["[1]\n ^\n should be a string with bla bla bla"]
+         (->> (l/explain-data ::things [1] {:highlight? true
+                                           :highlight-inline-message? true})
+                :clojure.spec.alpha/problems
+                (map :exoscale.lingo.explain/highlight)))))
 
 (l/explain-data string? 1)
 
@@ -325,3 +326,8 @@
              :clojure.spec.alpha/problems
              (map :exoscale.lingo.explain/message)
              set))))
+
+(do
+  (println "-------------------------")
+  (l/explain-data ::things [1] {:highlight? true
+                                :highlight-inline-message? true}))
