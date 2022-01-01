@@ -39,14 +39,18 @@
                    :highlight? true
                    :highlight-inline-message? false})
 
-(defn x-extend-data
+(defn x-extend-pred-data
   [opts]
-  (map (fn [{:keys [pred via] :as pb}]
-         (let [spec (last via)
-               ident-data (impl/find-ident-data spec opts)
-               pred-data (impl/find-pred-data pred opts)]
+  (map (fn [{:keys [pred] :as pb}]
+         (let [pred-data (impl/find-pred-data pred opts)]
            (cond-> pb
-             pred-data (into pred-data)
+             pred-data (into pred-data))))))
+
+(defn x-extend-ident-data
+  [opts]
+  (map (fn [{:keys [via] :as pb}]
+         (let [ident-data (impl/find-ident-data (last via) opts)]
+           (cond-> pb
              ident-data (into ident-data))))))
 
 (defn x-extend-msg
@@ -85,7 +89,7 @@
                 path))
             pbs))
 
-(defn group-missing-keys
+(defn- group-missing-keys
   [pbs]
   (let [mk-by-path (missing-keys-pbs-by-path pbs)
         missing-keys-pbs (into #{}
@@ -118,7 +122,9 @@
                        (if highlight?
                          (x-highlight value opts)
                          identity))
-                      (cond->> (eduction (x-extend-data opts) pbs)
+                      (cond->> (eduction (x-extend-ident-data opts)
+                                         (x-extend-pred-data opts)
+                                         pbs)
                         group-missing-keys?
                         group-missing-keys
                         :then (sort-by #(- (count (:path %)))))))))
