@@ -307,3 +307,10 @@
      {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
     {:in [:aaaaaaaaaaaaa :c] :val 33333}
     "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}"))
+
+(deftest test-group-keys
+  (is (= "missing keys :age, :person"
+         (-> (l/explain-data :foo/agent2 {} {:exoscale.lingo/group-missing-keys? true})
+             :clojure.spec.alpha/problems
+             first
+             :exoscale.lingo/message))))

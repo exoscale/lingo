@@ -123,34 +123,3 @@
                             line)))
                    (interpose \newline))
                   string-builder)))
-
-;; (print (highlight {:aaaaaaaaaaaaa
-;;                    {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2
-;;                     :c 33333
-;;                     :d '[a b c]
-;;                     :e 5
-;;                     :f 1}}
-;;                   {:in [:aaaaaaaaaaaaa
-;;                         :d]
-;;                    :exoscale.lingo/message "Should be a String"
-;;                    }))
-
-;; (print (highlight {:aaaaaaaaaaaaa
-;;                    {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2
-;;                     :c 33333
-;;                     :d 44
-;;                     :e 5
-;;                     :f 1}}
-;;                   {:in [:aaaaaaaaaaaaa
-;;                         :d]}))
-;; (print)
-;; (print (highlight {:aaaaaaaaaaaaaa
-;;                    {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2
-;;                     :c 33333
-;;                     :d 4
-;;                     :e 5
-;;                     :f {:aaaaaaaaaaaaa
-;;                         {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}}}
-;;                   {:in [:aaaaaaaaaaaaaa
-;;                         :f]
-;;                    :exoscale.lingo/message "Should be a string"}))

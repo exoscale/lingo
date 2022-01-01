@@ -11,24 +11,13 @@
 
 (defn spec-error-message
   [spec registry-val]
-  (get-in registry-val [:exoscale.lingo/specs spec]))
+  (get-in registry-val [:exoscale.lingo/spec-msg spec]))
 
 (defn strip-core
   [sym]
   (cond-> sym
     (= (namespace sym) "clojure.core")
     (-> name symbol)))
-
-(defn find-registry-pred-data
-  [x {:as opts :exoscale.lingo/keys [registry conform]}]
-  (reduce (fn [_ [k formater]]
-            (when-let [match (conform k x)]
-              (when (not= match :clojure.spec.alpha/invalid)
-                (reduced #:exoscale.lingo.pred{:spec k
-                                               :vals match
-                                               :msg (formater match opts)}))))
-          nil
-          (get @registry :exoscale.lingo/preds)))
 
 (defn abbrev [form]
   (cond->> form
@@ -64,18 +53,14 @@
         (take-while some?))))
 
 (defn find-pred-data
-  [pred {:exoscale.lingo/keys [registry] :as opts}]
-  (let [pred' (abbrev pred)]
-    (cond
-      (ident? pred)
-      (when-let [msg (spec-error-message (if (simple-symbol? pred')
-                                           (symbol "clojure.core" (name pred'))
-                                           pred') ; special case we need to expand the :pred value
-                                         @registry)]
-        #:exoscale.lingo.pred{:msg msg :vals pred})
-      (or (sequential? pred) (set? pred))
-      (find-registry-pred-data pred'
-                               opts))))
+  [pred {:exoscale.lingo/keys [registry conform] :as _opts}]
+  (reduce (fn [_ k]
+            (when-let [match (conform k (abbrev pred))]
+              (when (not= match :clojure.spec.alpha/invalid)
+                (reduced #:exoscale.lingo.pred{:spec k
+                                               :vals match}))))
+          nil
+          (get @registry :exoscale.lingo/pred-conformer)))
 
 (defn find-ident-data
   [spec {:as _opts :exoscale.lingo/keys [registry]}]
@@ -83,8 +68,7 @@
         spec-path (spec-vals spec)]
     (reduce (fn [_ spec]
               (let [spec' (abbrev spec)]
-                (when-let [msg (spec-error-message (abbrev spec)
-                                                   registry-val)]
+                (when-let [msg (spec-error-message spec' registry-val)]
                   (reduced #:exoscale.lingo.ident{:msg msg
                                                   :spec spec'
                                                   :path spec-path}))))
