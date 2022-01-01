@@ -11,7 +11,7 @@
 
 (defn spec-error-message
   [spec registry-val]
-  (get-in registry-val [:exoscale.lingo/spec-msg spec]))
+  (get-in registry-val [:exoscale.lingo.registry.spec/msg spec]))
 
 (defn strip-core
   [sym]
@@ -53,27 +53,25 @@
         (take-while some?))))
 
 (defn find-pred-data
-  [pred {:exoscale.lingo/keys [registry conform] :as _opts}]
+  [pred {:keys [registry conform] :as _opts}]
   (reduce (fn [_ k]
             (when-let [match (conform k (abbrev pred))]
               (when (not= match :clojure.spec.alpha/invalid)
-                (reduced #:exoscale.lingo.pred{:spec k
-                                               :vals match}))))
+                (reduced #:exoscale.lingo.explain.pred{:spec k
+                                                       :vals match}))))
           nil
-          (get @registry :exoscale.lingo/pred-conformer)))
+          (:exoscale.lingo.registry.pred/conformers @registry)))
 
-(defn find-ident-data
-  [spec {:as _opts :exoscale.lingo/keys [registry]}]
-  (let [registry-val @registry
-        spec-path (spec-vals spec)]
+(defn find-spec-data
+  [spec {:as _opts :keys [registry]}]
+  (let [registry-val @registry]
     (reduce (fn [_ spec]
               (let [spec' (abbrev spec)]
                 (when-let [msg (spec-error-message spec' registry-val)]
-                  (reduced #:exoscale.lingo.ident{:msg msg
-                                                  :spec spec'
-                                                  :path spec-path}))))
+                  (reduced #:exoscale.lingo.explain.spec{:msg msg
+                                                         :spec spec'}))))
             nil
-            spec-path)))
+            (spec-vals spec))))
 
 (defn path-str
   [in]
@@ -92,3 +90,33 @@
                        (str (mdot s) (str segment)))))
               nil
               in))))
+
+;;; grouping
+
+(defn- missing-keys-pbs-by-path [pbs]
+  (not-empty
+   (group-by (fn [{:as pb :keys [path]}] path)
+             (filter #(= (:exoscale.lingo.explain.pred/spec %)
+                         :exoscale.lingo.pred/contains-key)
+                     pbs))))
+
+(defn group-missing-keys
+  [pbs]
+  (when-let [mk-by-path (missing-keys-pbs-by-path pbs)]
+    (let [missing-keys-pbs (into #{}
+                                 (comp (map val) cat)
+                                 mk-by-path)]
+      (concat (remove (fn [pb] (contains? missing-keys-pbs pb)) pbs)
+              (map (fn [pbs]
+                     (let [missing-keys (into #{}
+                                              (map #(-> %
+                                                        :exoscale.lingo.explain.pred/vals
+                                                        :key))
+                                              pbs)]
+                       (-> (first pbs)
+                           (select-keys [:path :via :val :in])
+                           (assoc :pred (list  'contains-keys? '% missing-keys)
+                                  :exoscale.lingo.explain.pred/spec :exoscale.lingo.pred/contains-keys
+                                  :exoscale.lingo.explain.pred/vals {:keys missing-keys}))))
+
+                   (vals mk-by-path))))))

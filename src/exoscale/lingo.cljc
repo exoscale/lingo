@@ -1,21 +1,21 @@
 (ns exoscale.lingo
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
-            [exoscale.lingo.utils :as u]
+            [exoscale.lingo.highlight :as u]
             [exoscale.lingo.impl :as impl]
             [exoscale.lingo :as l]))
 
-(def registry-ref (atom #:exoscale.lingo{:spec-msg {}
-                                         :pred-conformer #{}
-                                         :pred-msg {}}))
+(def registry-ref (atom (merge #:exoscale.lingo.registry.spec{:msg {}}
+                               #:exoscale.lingo.registry.pred{:conformers #{}
+                                                              :msg {}})))
 
 (defn set-pred-conformer!
   [k]
-  (swap! registry-ref update :exoscale.lingo/pred-conformer conj k))
+  (swap! registry-ref update :exoscale.lingo.registry.pred/conformers conj k))
 
 (defn set-pred-msg!
   [k f]
-  (swap! registry-ref assoc-in [:exoscale.lingo/pred-msg k] f))
+  (swap! registry-ref assoc-in [:exoscale.lingo.registry.pred/msg k] f))
 
 (defn set-pred-error!
   "Set conforming spec `spec-ptn` for matching/binding values for later
@@ -29,15 +29,15 @@
   [spec msg]
   (swap! registry-ref
          assoc-in
-         [:exoscale.lingo/spec-msg spec]
+         [:exoscale.lingo.registry.spec/msg spec]
          msg))
 
 (def default-opts
-  #:exoscale.lingo{:registry registry-ref
-                   ;; use (memoize s/conform) for fast lookup
-                   :conform s/conform
-                   :highlight? true
-                   :highlight-inline-message? false})
+  {:registry registry-ref
+   ;; use (memoize s/conform) for fast lookup
+   :conform s/conform
+   :highlight? true
+   :highlight-inline-message? false})
 
 (defn x-extend-pred-data
   [opts]
@@ -46,73 +46,44 @@
            (cond-> pb
              pred-data (into pred-data))))))
 
-(defn x-extend-ident-data
+(defn x-extend-spec-data
   [opts]
   (map (fn [{:keys [via] :as pb}]
-         (let [ident-data (impl/find-ident-data (last via) opts)]
+         (let [ident-data (impl/find-spec-data (last via) opts)]
            (cond-> pb
              ident-data (into ident-data))))))
 
 (defn x-extend-msg
-  [{:as opts :exoscale.lingo/keys [registry]}]
+  [{:as opts :keys [registry]}]
   (map (fn [pb]
-         (let [ident-msg (:exoscale.lingo.ident/msg pb)
-               pred-msg (or (:exoscale.lingo.pred/msg pb)
-                            (when-let [vals (:exoscale.lingo.pred/vals pb)]
-                              (when-let [f (get-in @registry
-                                                   [:exoscale.lingo/pred-msg
-                                                    (:exoscale.lingo.pred/spec pb)])]
-                                (f vals opts))))
+         (let [ident-msg (:exoscale.lingo.explain.spec/msg pb)
+               pred-msg (when-let [vals (:exoscale.lingo.explain.pred/vals pb)]
+                          (when-let [f (get-in @registry
+                                               [:exoscale.lingo.registry.pred/msg
+                                                (:exoscale.lingo.explain.pred/spec pb)])]
+                            (f vals opts)))
                msg (or ident-msg pred-msg)]
            (cond-> pb
-             pred-msg (assoc :exoscale.lingo.pred/msg pred-msg)
-             msg (assoc :exoscale.lingo/message msg))))))
+             pred-msg (assoc :exoscale.lingo.explain.pred/msg pred-msg)
+             msg (assoc :exoscale.lingo.explain/message msg))))))
 
 (defn x-extend-path
   [_opts]
   (map (fn [{:keys [in] :as pb}]
          (let [path (impl/path-str in)]
            (cond-> pb
-             path (assoc :exoscale.lingo/path path))))))
+             path (assoc :exoscale.lingo.explain/path path))))))
 
 (defn x-highlight
   [val opts]
   (map (fn [{:keys [in] :as pb}]
          (cond-> pb
            (seq in)
-           (assoc :exoscale.lingo/highlight (u/highlight val pb opts))))))
-
-(defn- missing-keys-pbs-by-path [pbs]
-  (group-by (fn [{:as pb :keys [path]}]
-              (when (= (:exoscale.lingo.pred/spec pb)
-                       :exoscale.lingo/contains-key)
-                path))
-            pbs))
-
-(defn- group-missing-keys
-  [pbs]
-  (let [mk-by-path (missing-keys-pbs-by-path pbs)
-        missing-keys-pbs (into #{}
-                               (comp (map val) cat)
-                               mk-by-path)]
-    (concat (remove (fn [pb] (contains? missing-keys-pbs pb)) pbs)
-            (map (fn [pbs]
-                   (let [missing-keys (into #{}
-                                            (map #(-> %
-                                                      :exoscale.lingo.pred/vals
-                                                      :key))
-                                            pbs)]
-                     (-> (first pbs)
-                         (select-keys [:path :via :val :in])
-                         (assoc :pred (list  'contains-keys? '% missing-keys)
-                                :exoscale.lingo.pred/spec :exoscale.lingo/contains-keys
-                                :exoscale.lingo.pred/vals {:keys missing-keys}))))
-
-                 (vals mk-by-path)))))
+           (assoc :exoscale.lingo.explain/highlight (u/highlight val pb opts))))))
 
 (defn explain-data*
   [{:as explain-data :clojure.spec.alpha/keys [value]}
-   {:as opts :exoscale.lingo/keys [highlight? group-missing-keys?]}]
+   {:as opts :keys [highlight? group-missing-keys?]}]
   (update explain-data
           :clojure.spec.alpha/problems
           (fn [pbs]
@@ -122,11 +93,11 @@
                        (if highlight?
                          (x-highlight value opts)
                          identity))
-                      (cond->> (eduction (x-extend-ident-data opts)
+                      (cond->> (eduction (x-extend-spec-data opts)
                                          (x-extend-pred-data opts)
                                          pbs)
                         group-missing-keys?
-                        group-missing-keys
+                        impl/group-missing-keys
                         :then (sort-by #(- (count (:path %)))))))))
 
 (defn explain-data
@@ -140,11 +111,11 @@
   "Like spec explain, but uses lingo printer"
   ([spec value] (explain spec value nil))
   ([spec value opts]
-   (let [{:as opts :exoscale.lingo/keys [highlight?]} (into default-opts opts)]
+   (let [{:as opts :keys [highlight?]} (into default-opts opts)]
      (if-let [{:as _ed
                :clojure.spec.alpha/keys [problems]} (explain-data spec value opts)]
        (doseq [{:as _problem
-                :exoscale.lingo/keys [message highlight]
+                :exoscale.lingo.explain/keys [message highlight]
                 :keys [via in val pred]} problems
                :let [spec (last via)]]
          ;; (do
@@ -221,9 +192,9 @@
 (set-spec-error! `some? "should be Non-nil")
 (set-spec-error! `nil? "should be nil")
 
-; pred errors
+;; pred errors
 (set-pred-error! (s/def :exoscale.lingo.pred/symbol symbol?)
-                 (fn [sym {:as _opts :exoscale.lingo/keys [registry]}]
+                 (fn [sym {:as _opts :keys [registry]}]
                    (impl/spec-error-message (if (simple-symbol? sym)
                                               (symbol "clojure.core" (name sym))
                                               sym)
@@ -233,7 +204,7 @@
                  (fn [st _opts]
                    (impl/format "should be one of %s" (str/join ", " (sort st)))))
 
-(set-pred-error! (s/def :exoscale.lingo/contains-key
+(set-pred-error! (s/def :exoscale.lingo.pred/contains-key
                    (s/cat :pred #{'contains?}
                           :arg #{'%}
                           :key keyword?))
@@ -243,7 +214,7 @@
                                   (:hide-keyword-namespaces? opts)
                                   (-> name keyword)))))
 
-(set-pred-msg! :exoscale.lingo/contains-keys
+(set-pred-msg! :exoscale.lingo.pred/contains-keys
                (fn [{:keys [keys]} opts]
                  (impl/format "missing keys %s"
                               (->> keys
@@ -254,7 +225,7 @@
 
 (s/def ::count+arg (s/spec (s/cat :_ #{'count} :sym simple-symbol?)))
 
-(set-pred-error! (s/def :exoscale.lingo/gte-count
+(set-pred-error! (s/def :exoscale.lingo.pred/gte-count
                    (s/cat :_op #{'<=}
                           :min number?
                           :_cnt ::count+arg
@@ -263,7 +234,7 @@
                    (impl/format "should contain at least %s elements"
                                 min)))
 
-(set-pred-error! (s/def :exoscale.lingo/lte-count
+(set-pred-error! (s/def :exoscale.lingo.pred/lte-count
                    (s/cat :_op #{'>=}
                           :_zero #{0}
                           :_cnt ::count+arg
@@ -272,7 +243,7 @@
                    (impl/format "should contain at most %s elements"
                                 max)))
 
-(set-pred-error! (s/def :exoscale.lingo/between-count
+(set-pred-error! (s/def :exoscale.lingo.pred/between-count
                    (s/cat :_op #{'<=}
                           :min number?
                           :_cnt ::count+arg
@@ -281,7 +252,7 @@
                    (impl/format "should contain between %s %s elements"
                                 min max)))
 
-(set-pred-error! (s/def :exoscale.lingo/compare-count
+(set-pred-error! (s/def :exoscale.lingo.pred/compare-count
                    (s/or :count-1
                          (s/cat :op #{'= '< '> '<= '>= 'not=}
                                 :_ ::count+arg
@@ -303,7 +274,7 @@
                                   "element"
                                   "elements"))))
 
-(set-pred-error! (s/def :exoscale.lingo/num-compare
+(set-pred-error! (s/def :exoscale.lingo.pred/num-compare
                    (s/or :count-1
                          (s/cat :op #{'= '< '> '<= '>= 'not=}
                                 :_ simple-symbol?
@@ -322,7 +293,7 @@
                                   <= "be at most")
                                 x)))
 
-(set-pred-error! (s/def :exoscale.lingo/int-in-range
+(set-pred-error! (s/def :exoscale.lingo.pred/int-in-range
                    (s/or :_ (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
                                    :min number?
                                    :max number?

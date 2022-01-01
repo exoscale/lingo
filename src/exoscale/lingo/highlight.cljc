@@ -1,4 +1,4 @@
-(ns exoscale.lingo.utils
+(ns exoscale.lingo.highlight
   (:require [clojure.pprint :as pp]
             [clojure.string :as str]))
 
@@ -107,8 +107,10 @@
 
 (defn highlight
   [value
-   {:as _pb :keys [in val] :exoscale.lingo/keys [message]}
-   {:as _opts :exoscale.lingo/keys [highlight-inline-message?]}]
+   {:as _pb
+    :keys [in val]
+    :exoscale.lingo.explain/keys [message]}
+   {:as _opts :keys [highlight-inline-message?]}]
   (->> (prep-val value in)
        str/split-lines
        (transduce (comp

@@ -1,7 +1,7 @@
 (ns exoscale.lingo.test.core-test
   (:require [clojure.test :refer [are deftest is]]
             [exoscale.lingo :as l]
-            [exoscale.lingo.utils :as u]
+            [exoscale.lingo.highlight :as u]
             ;; [exoscale.specs.string :as xss]
             [clojure.spec.alpha :as s]))
 
@@ -31,7 +31,7 @@
   (println "-------------------------")
   (l/explain-data ::things 1))
 
-(def ^:dynamic *opts* {:exoscale.lingo/highlight? false})
+(def ^:dynamic *opts* {:highlight? false})
 
 (deftest test-outputs
   (are [spec val output] (= (l/explain-str spec val *opts*)
@@ -308,9 +308,20 @@
     {:in [:aaaaaaaaaaaaa :c] :val 33333}
     "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}"))
 
+(l/explain-data string? 1)
+
 (deftest test-group-keys
   (is (= "missing keys :age, :person"
-         (-> (l/explain-data :foo/agent2 {} {:exoscale.lingo/group-missing-keys? true})
+         (-> (l/explain-data :foo/agent2 {} {:group-missing-keys? true})
              :clojure.spec.alpha/problems
              first
-             :exoscale.lingo/message))))
+             :exoscale.lingo.explain/message)))
+
+  (is (= #{"missing keys :age, :person"
+           "missing keys :names"}
+         (->> (l/explain-data (s/tuple :foo/agent2 :foo/person)
+                             [{} {}]
+                             {:group-missing-keys? true})
+             :clojure.spec.alpha/problems
+             (map :exoscale.lingo.explain/message)
+             set))))
