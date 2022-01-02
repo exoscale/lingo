@@ -105,12 +105,20 @@
   [m in]
   (pp-str (focus m in {:match-fn (constantly relevant-mark)})))
 
+
+(def colors
+  {:red "\u001b[31m"
+   :reset "\u001b[0m"})
+
+(defn- highlight-colors [message]
+  (str (:red colors) message (:reset colors)))
+
 (defn highlight
   [value
    {:as _pb
     :keys [in val]
     :exoscale.lingo.explain/keys [message]}
-   {:as _opts :keys [highlight-inline-message?]}]
+   {:as _opts :keys [highlight-inline-message? highlight-colors?]}]
   (->> (prep-val value in)
        str/split-lines
        (transduce (comp
@@ -121,7 +129,10 @@
                                    \newline
                                    (marker idx (width s))
                                    (when (and highlight-inline-message? message)
-                                     (str \newline (pad idx) message))))
+                                     (str \newline (pad idx)
+                                          (cond-> message
+                                            highlight-colors?
+                                            highlight-colors)))))
                             line)))
                    (interpose \newline))
                   string-builder)))

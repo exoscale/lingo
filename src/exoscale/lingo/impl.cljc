@@ -95,7 +95,7 @@
 
 (defn- missing-keys-pbs-by-path [pbs]
   (not-empty
-   (group-by (fn [{:as pb :keys [path]}] path)
+   (group-by (fn [{:as _pb :keys [path]}] path)
              (filter #(= (:exoscale.lingo.explain.pred/spec %)
                          :exoscale.lingo.pred/contains-key)
                      pbs))))

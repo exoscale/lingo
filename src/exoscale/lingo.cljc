@@ -37,7 +37,8 @@
    ;; use (memoize s/conform) for fast lookup
    :conform s/conform
    :highlight? true
-   :highlight-inline-message? false})
+   :highlight-inline-message? false
+   :highlight-colors? false})
 
 (defn x-extend-pred-data
   [opts]
