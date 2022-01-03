@@ -108,10 +108,13 @@
 
 (def colors
   {:red "\u001b[31m"
+   :yellow "\u001b[33m"
+   :blue "\u001b[34m"
+   :cyan "\u001b[36;1m"
    :reset "\u001b[0m"})
 
-(defn- highlight-colors [message]
-  (str (:red colors) message (:reset colors)))
+(defn- color [s color]
+  (str (color colors) s (:reset colors)))
 
 (defn highlight
   [value
@@ -125,14 +128,20 @@
                    (map (fn [line]
                           (if-let [idx (relevant-mark-index line)]
                             (let [s (pp-str val)]
-                              (str (replace-mark line s idx)
+                              (str (replace-mark line
+                                                 (cond-> s
+                                                    highlight-colors?
+                                                    (color :red))
+                                                 idx)
                                    \newline
-                                   (marker idx (width s))
+                                   (cond-> (marker idx (width s))
+                                     highlight-colors?
+                                     (color :red))
                                    (when (and highlight-inline-message? message)
                                      (str \newline (pad idx)
                                           (cond-> message
                                             highlight-colors?
-                                            highlight-colors)))))
+                                            (color :cyan))))))
                             line)))
                    (interpose \newline))
                   string-builder)))

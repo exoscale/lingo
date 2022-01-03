@@ -57,13 +57,13 @@
 (defn x-extend-msg
   [{:as opts :keys [registry]}]
   (map (fn [pb]
-         (let [ident-msg (:exoscale.lingo.explain.spec/msg pb)
+         (let [spec-msg (:exoscale.lingo.explain.spec/msg pb)
                pred-msg (when-let [vals (:exoscale.lingo.explain.pred/vals pb)]
                           (when-let [f (get-in @registry
                                                [:exoscale.lingo.registry.pred/msg
                                                 (:exoscale.lingo.explain.pred/spec pb)])]
                             (f vals opts)))
-               msg (or ident-msg pred-msg)]
+               msg (or spec-msg pred-msg)]
            (cond-> pb
              pred-msg (assoc :exoscale.lingo.explain.pred/msg pred-msg)
              msg (assoc :exoscale.lingo.explain/message msg))))))
@@ -112,43 +112,46 @@
   "Like spec explain, but uses lingo printer"
   ([spec value] (explain spec value nil))
   ([spec value opts]
-   (let [{:as opts :keys [highlight?]} (into default-opts opts)]
+   (let [{:as opts :keys [highlight? highlight-inline-message?]}
+         (into default-opts opts)]
      (if-let [{:as _ed
                :clojure.spec.alpha/keys [problems]} (explain-data spec value opts)]
        (doseq [{:as _problem
                 :exoscale.lingo.explain/keys [message highlight]
                 :keys [via in val pred]} problems
                :let [spec (last via)]]
-         ;; (do
-         ;;   (if spec
-         ;;     (print (impl/format "Invalid %s" (pr-str spec)))
-         ;;     (print "Invalid"))
+         (if highlight-inline-message?
+           (do
+             (if spec
+               (print (impl/format "Invalid %s" (pr-str spec)))
+               (print "Invalid value"))
 
-         ;;   (when-not (empty? in)
-         ;;     (print (impl/format " in `%s`" (impl/path-str in))))
+             (when-not (empty? in)
+               (print (impl/format " in `%s`" (impl/path-str in))))
 
-         ;;   (newline)
-         ;;   (newline)
-         ;;   (print highlight)
-         ;;   (newline)
-         ;;   (newline))
-         (print (pr-str val))
+             (when (and highlight? highlight)
+               (newline)
+               (newline)
+               (print highlight)
+               (newline)))
+           (do
+             (print (pr-str val))
 
-         (when-not (empty? in)
-           (print (impl/format " in `%s`" (impl/path-str in))))
+             (when-not (empty? in)
+               (print (impl/format " in `%s`" (impl/path-str in))))
 
-         (if spec
-           (print (impl/format " is an invalid %s" (pr-str spec)))
-           (print " is invalid"))
+             (if spec
+               (print (impl/format " is an invalid %s" (pr-str spec)))
+               (print " is invalid"))
 
-         (print " - ")
-         (print (or message (impl/abbrev pred)))
-         (newline)
+             (print " - ")
+             (print (or message (impl/abbrev pred)))
+             (newline)
 
-         (when (and highlight? highlight)
-           (newline)
-           (print highlight)
-           (newline)))
+             (when (and highlight? highlight)
+               (newline)
+               (print highlight)
+               (newline)))))
 
        (println "Success!")))))
 
