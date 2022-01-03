@@ -2,7 +2,6 @@
   (:require [clojure.test :refer [are deftest is]]
             [exoscale.lingo :as l]
             [exoscale.lingo.highlight :as u]
-            ;; [exoscale.specs.string :as xss]
             [clojure.spec.alpha :as s]))
 
 (defn f2? [_] false)

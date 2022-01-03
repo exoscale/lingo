@@ -108,16 +108,6 @@
    (some-> (s/explain-data spec value)
            (explain-data* (into default-opts opts)))))
 
-;; (s/def ::foo (s/coll-of string?))
-;; (set-spec-error! ::foo "Ho ho")
-;; (explain-data ::foo ["1" 1 (bean (java.util.Date.))]
-;;          {:highlight-inline-message? true
-;;           :highlight-colors? true})
-
-;; (explain-data (s/coll-of string? :max-count 1) ["1" 1 {}]
-;;          {:highlight-inline-message? true
-;;           :highlight-colors? true})
-
 (defn explain
   "Like spec explain, but uses lingo printer"
   ([spec value] (explain spec value nil))
