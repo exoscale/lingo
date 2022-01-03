@@ -108,52 +108,67 @@
    (some-> (s/explain-data spec value)
            (explain-data* (into default-opts opts)))))
 
+(defn explain-printer
+  "Like spec explain, but uses lingo printer"
+  ([ed] (explain-printer ed nil))
+  ([{:as _ed :clojure.spec.alpha/keys [problems]}
+    {:as _opts :keys [highlight? :highlight-inline-message?]}]
+   (if (seq problems)
+     (doseq [{:as _problem
+              :exoscale.lingo.explain/keys [message highlight]
+              :keys [via in val pred]} problems
+             :let [spec (last via)]]
+       (if highlight-inline-message?
+         (do
+           (if spec
+             (print (impl/format "Invalid %s" (pr-str spec)))
+             (print "Invalid value"))
+
+           (when-not (empty? in)
+             (print (impl/format " in `%s`" (impl/path-str in))))
+
+           (when (and highlight? highlight)
+             (newline)
+             (newline)
+             (print highlight)
+             (newline)))
+         (do
+           (print (pr-str val))
+
+           (when-not (empty? in)
+             (print (impl/format " in `%s`" (impl/path-str in))))
+
+           (if spec
+             (print (impl/format " is an invalid %s" (pr-str spec)))
+             (print " is invalid"))
+
+           (print " - ")
+           (print (or message (impl/abbrev pred)))
+           (newline)
+
+           (when (and highlight? highlight)
+             (newline)
+             (print highlight)
+             (newline)))))
+
+     (println "Success!"))))
+
+(defn set-explain-printer!
+  "Sets explain printer globally for all specs"
+  ([] (set-explain-printer! nil))
+  ([opts]
+   (set! clojure.spec.alpha/*explain-out*
+         (let [opts (into default-opts opts)]
+           (fn [ed]
+             (doto (explain-printer (explain-data* ed opts)
+                               opts)
+               prn))))))
+
 (defn explain
   "Like spec explain, but uses lingo printer"
   ([spec value] (explain spec value nil))
   ([spec value opts]
-   (let [{:as opts :keys [highlight? highlight-inline-message?]}
-         (into default-opts opts)]
-     (if-let [{:as _ed
-               :clojure.spec.alpha/keys [problems]} (explain-data spec value opts)]
-       (doseq [{:as _problem
-                :exoscale.lingo.explain/keys [message highlight]
-                :keys [via in val pred]} problems
-               :let [spec (last via)]]
-         (if highlight-inline-message?
-           (do
-             (if spec
-               (print (impl/format "Invalid %s" (pr-str spec)))
-               (print "Invalid value"))
-
-             (when-not (empty? in)
-               (print (impl/format " in `%s`" (impl/path-str in))))
-
-             (when (and highlight? highlight)
-               (newline)
-               (newline)
-               (print highlight)
-               (newline)))
-           (do
-             (print (pr-str val))
-
-             (when-not (empty? in)
-               (print (impl/format " in `%s`" (impl/path-str in))))
-
-             (if spec
-               (print (impl/format " is an invalid %s" (pr-str spec)))
-               (print " is invalid"))
-
-             (print " - ")
-             (print (or message (impl/abbrev pred)))
-             (newline)
-
-             (when (and highlight? highlight)
-               (newline)
-               (print highlight)
-               (newline)))))
-
-       (println "Success!")))))
+   (explain-printer (explain-data spec value (into default-opts opts)))))
 
 (defn explain-str
   "Like spec explain-str, but uses lingo printer"
