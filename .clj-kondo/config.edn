@@ -4,6 +4,7 @@
    :exclude #{exoscale.lingo/explain
               exoscale.lingo/explain-str
               exoscale.lingo/explain-data
-              exoscale.lingo/def-pred-matcher}}}
+              exoscale.lingo/def-pred-matcher
+              exoscale.lingo/set-explain-printer!}}}
 
  :skip-comments true}
