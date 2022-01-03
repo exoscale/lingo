@@ -5,37 +5,37 @@
             [exoscale.lingo.impl :as impl]
             [exoscale.lingo :as l]))
 
-(def registry-ref (atom (merge #:exoscale.lingo.registry.spec{:msg {}}
+(def registry-ref (atom (merge #:exoscale.lingo.registry.spec{:message {}}
                                #:exoscale.lingo.registry.pred{:conformers #{}
-                                                              :msg {}})))
+                                                              :message {}})))
 
 (defn set-pred-conformer!
   [k]
   (swap! registry-ref update :exoscale.lingo.registry.pred/conformers conj k))
 
-(defn set-pred-msg!
+(defn set-pred-message!
   [k f]
-  (swap! registry-ref assoc-in [:exoscale.lingo.registry.pred/msg k] f))
+  (swap! registry-ref assoc-in [:exoscale.lingo.registry.pred/message k] f))
 
 (defn set-pred-error!
   "Set conforming spec `spec-ptn` for matching/binding values for later
   message impl/formating via `f bindings`"
   [k f]
   (set-pred-conformer! k)
-  (set-pred-msg! k f))
+  (set-pred-message! k f))
 
 (defn set-spec-error!
   "Set error message for `spec` (keyword, ident, s-expr (pred)) with `msg`"
   [spec msg]
   (swap! registry-ref
          assoc-in
-         [:exoscale.lingo.registry.spec/msg spec]
+         [:exoscale.lingo.registry.spec/message spec]
          msg))
 
 (def default-opts
   {:registry registry-ref
    ;; use (memoize s/conform) for fast lookup
-   :conform s/conform
+   :conform (memoize s/conform)
    :highlight? true
    :highlight-inline-message? false
    :highlight-colors? false})
@@ -54,18 +54,18 @@
            (cond-> pb
              ident-data (into ident-data))))))
 
-(defn x-extend-msg
+(defn x-extend-message
   [{:as opts :keys [registry]}]
   (map (fn [pb]
-         (let [spec-msg (:exoscale.lingo.explain.spec/msg pb)
+         (let [spec-msg (:exoscale.lingo.explain.spec/message pb)
                pred-msg (when-let [vals (:exoscale.lingo.explain.pred/vals pb)]
                           (when-let [f (get-in @registry
-                                               [:exoscale.lingo.registry.pred/msg
+                                               [:exoscale.lingo.registry.pred/message
                                                 (:exoscale.lingo.explain.pred/spec pb)])]
                             (f vals opts)))
                msg (or spec-msg pred-msg)]
            (cond-> pb
-             pred-msg (assoc :exoscale.lingo.explain.pred/msg pred-msg)
+             pred-msg (assoc :exoscale.lingo.explain.pred/message pred-msg)
              msg (assoc :exoscale.lingo.explain/message msg))))))
 
 (defn x-extend-path
@@ -89,7 +89,7 @@
           :clojure.spec.alpha/problems
           (fn [pbs]
             (sequence (comp
-                       (x-extend-msg opts)
+                       (x-extend-message opts)
                        (x-extend-path opts)
                        (if highlight?
                          (x-highlight value opts)
@@ -107,6 +107,16 @@
   ([spec value opts]
    (some-> (s/explain-data spec value)
            (explain-data* (into default-opts opts)))))
+
+;; (s/def ::foo (s/coll-of string?))
+;; (set-spec-error! ::foo "Ho ho")
+;; (explain-data ::foo ["1" 1 (bean (java.util.Date.))]
+;;          {:highlight-inline-message? true
+;;           :highlight-colors? true})
+
+;; (explain-data (s/coll-of string? :max-count 1) ["1" 1 {}]
+;;          {:highlight-inline-message? true
+;;           :highlight-colors? true})
 
 (defn explain
   "Like spec explain, but uses lingo printer"
@@ -218,14 +228,14 @@
                                   (:hide-keyword-namespaces? opts)
                                   (-> name keyword)))))
 
-(set-pred-msg! :exoscale.lingo.pred/contains-keys
-               (fn [{:keys [keys]} opts]
-                 (impl/format "missing keys %s"
-                              (->> keys
-                                   (map #(cond-> %
-                                           (:hide-keyword-namespaces? opts)
-                                           (-> name keyword)))
-                                   (str/join ", ")))))
+(set-pred-message! :exoscale.lingo.pred/contains-keys
+                   (fn [{:keys [keys]} opts]
+                     (impl/format "missing keys %s"
+                                  (->> keys
+                                       (map #(cond-> %
+                                               (:hide-keyword-namespaces? opts)
+                                               (-> name keyword)))
+                                       (str/join ", ")))))
 
 (s/def ::count+arg (s/spec (s/cat :_ #{'count} :sym simple-symbol?)))
 

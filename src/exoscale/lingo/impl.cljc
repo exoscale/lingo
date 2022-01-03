@@ -11,7 +11,7 @@
 
 (defn spec-error-message
   [spec registry-val]
-  (get-in registry-val [:exoscale.lingo.registry.spec/msg spec]))
+  (get-in registry-val [:exoscale.lingo.registry.spec/message spec]))
 
 (defn strip-core
   [sym]
@@ -67,8 +67,8 @@
   (let [registry-val @registry]
     (reduce (fn [_ spec]
               (let [spec' (abbrev spec)]
-                (when-let [msg (spec-error-message spec' registry-val)]
-                  (reduced #:exoscale.lingo.explain.spec{:msg msg
+                (when-let [message (spec-error-message spec' registry-val)]
+                  (reduced #:exoscale.lingo.explain.spec{:message message
                                                          :spec spec'}))))
             nil
             (spec-vals spec))))
