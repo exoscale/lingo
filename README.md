@@ -120,7 +120,8 @@ start from:
 If you are working from spec identifiers or static forms you can use
 `set-spec-error!`, it will dispatch on the problem spec (value we get from
 explain-data `:via`), potentially resolving aliases too, up to the pred failing
-at the end.
+at the end. spec errors will result in addition of
+`:exoscale.lingo.explain.spec/*` keys to the problem data.
 
 ``` clj
 (set-spec-error! `string? "should be a String")
@@ -140,8 +141,11 @@ at ::foo level, lingo will pick up the first message in the alias
 chain (so checks ::foo, then ::bar and then ::baz). Alias information
 is not data available from raw explain-data, lingo has to infer by itself.
 
-If you want to have more precise error handling based on the problem
-pred only (usually it's the best things to do) you can use `set-pred-error!`.
+
+If you want to have more precise error handling based on the problem pred only
+(usually it's the best things to do) you can use `set-pred-error!`. This will
+result in the addition of the `:exoscale.lingo.explain.pred/*` keys to the
+problem.
 
 ``` clj
 (set-pred-error! (s/def ::int-in-range (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
