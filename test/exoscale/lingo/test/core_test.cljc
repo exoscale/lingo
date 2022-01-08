@@ -323,7 +323,7 @@
               (map :exoscale.lingo.explain/message)
               set))))
 
-(deftest fix-prev-path-test
+(deftest fix-map-path-test
   (is (= [] (impl/fix-map-path [] [])))
   (is (= [] (impl/fix-map-path {} [])))
   (is (= [:a] (impl/fix-map-path {:a 1} [:a 1])))
