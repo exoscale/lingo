@@ -124,7 +124,7 @@
   "Like spec explain, but uses lingo printer"
   ([ed] (explain-printer ed nil))
   ([{:as _ed :clojure.spec.alpha/keys [problems]}
-    {:as _opts :keys [colors? highlight? highlight-fringe?]}]
+    {:as _opts :keys [colors? highlight?]}]
    (if (seq problems)
      (doseq [{:as _problem
               :exoscale.lingo.explain/keys [message highlight]
