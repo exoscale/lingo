@@ -36,6 +36,8 @@
   {:registry registry-ref
    :conform (memoize s/conform)
    :colors? false
+   :path? true
+   :message? true
    :highlight? true
    :highlight-inline-message? true})
 
@@ -90,16 +92,19 @@
 
 (defn explain-data*
   [{:as explain-data :clojure.spec.alpha/keys [value]}
-   {:as opts :keys [highlight? group-missing-keys?]}]
+   {:as opts :keys [highlight? group-missing-keys? path? message?]}]
   (update explain-data
           :clojure.spec.alpha/problems
           (fn [pbs]
             (sequence (comp
-                       (x-extend-message opts)
-                       (x-extend-path opts)
-                       (if highlight?
-                         (x-highlight value opts)
-                         identity))
+                       (if message? (x-extend-message opts) identity)
+                       (if path? (x-extend-path opts) identity)
+                       (if highlight? (x-highlight value opts) identity))
+                      ;; the stuff we will always do first, fixing spec bugs,
+                      ;; extending with our spec/pred data. We need to do this
+                      ;; first because of grouping, this way we can avoid to do
+                      ;; useless work that would be squashed by a potential
+                      ;; merge of problems
                       (cond->> (eduction (x-fix-spec-quirks value)
                                          (x-extend-spec-data opts)
                                          (x-extend-pred-data opts)
