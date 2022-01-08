@@ -34,12 +34,10 @@
 
 (def default-opts
   {:registry registry-ref
-   ;; use (memoize s/conform) for fast lookup
    :conform (memoize s/conform)
    :colors? false
    :highlight? true
-   :highlight-inline-message? true
-   :highlight-fringe? true})
+   :highlight-inline-message? true})
 
 (defn x-fix-spec-quirks
   [value]
@@ -139,13 +137,10 @@
            (newline)
            (when-not (empty? in)
              (print (impl/format "--> in `%s`" (impl/path-str in))))
-           ;; (print (str " " message))
            (newline)
 
            (println " |  ")
-           (print (cond-> highlight
-                    highlight-fringe?
-                    u/highlight-fringe))
+           (print (u/highlight-fringe highlight))
            (println "\n |  ")
            (newline))
          (do

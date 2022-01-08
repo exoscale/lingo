@@ -130,8 +130,8 @@
                   (let [m' (get m k ::empty)
                         path (conj prev-path k)]
                     (if (identical? ::empty m')
-                   ;; we have a hit on a broken path, we need to rewind by 1
-                      [m' prev-path]
+                      ;; we have a hit on a broken path, we need to rewind by 1
+                      [m prev-path]
                       [m' path])))
                 [value []]
                 path)

@@ -1,6 +1,7 @@
 (ns exoscale.lingo.test.core-test
   (:require [clojure.test :refer [are deftest is]]
             [exoscale.lingo :as l]
+            [exoscale.lingo.impl :as impl]
             [exoscale.lingo.highlight :as u]
             [clojure.spec.alpha :as s]))
 
@@ -302,7 +303,7 @@
     {:in [:aaaaaaaaaaaaa :c] :val 33333}
     "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}")
   (is (= ["[1]\n ^ should be a string with bla bla bla"]
-         (->> (l/explain-data ::things [1] {:highlight? true})
+         (->> (l/explain-data ::things [1])
               :clojure.spec.alpha/problems
               (map :exoscale.lingo.explain/highlight)))))
 
@@ -321,3 +322,13 @@
               :clojure.spec.alpha/problems
               (map :exoscale.lingo.explain/message)
               set))))
+
+(deftest fix-prev-path-test
+  (is (= [] (impl/fix-map-path [] [])))
+  (is (= [] (impl/fix-map-path {} [])))
+  (is (= [:a] (impl/fix-map-path {:a 1} [:a 1])))
+  (is (= [:a :b :c] (impl/fix-map-path {:a {:b {:c 1}}} [:a 1 :b 1 :c 1])))
+  (is (= [:a :b :c 0] (impl/fix-map-path {:a {:b {:c [1]}}}
+                                         [:a 1 :b 1 :c 1 0])))
+  (is (= [:a :b :c 1 :d]
+         (impl/fix-map-path {:a {:b {:c [{} {:d 1}]}}} [:a 1 :b 1 :c 1 1 :d 1]))))
