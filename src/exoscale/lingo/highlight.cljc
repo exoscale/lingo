@@ -119,7 +119,7 @@
    :cyan "\u001b[36;1m"
    :reset "\u001b[0m"})
 
-(defn- color [s color]
+(defn color [s color]
   (str (color colors) s (:reset colors)))
 
 (defn highlight
@@ -128,7 +128,7 @@
     :keys [in val pred]
     :exoscale.lingo.explain/keys [message]
     :or {message (str "Does not conform to " pred)}}
-   {:as _opts :keys [highlight-colors?
+   {:as _opts :keys [colors?
                      highlight-inline-message?]}]
   (cond-> (->> (prep-val value in)
                str/split-lines
@@ -140,7 +140,7 @@
                                     (let [s (pp-str val)]
                                       (str (replace-mark line
                                                          (cond-> s
-                                                           highlight-colors?
+                                                           colors?
                                                            (color :red))
                                                          idx)
                                            \newline
@@ -149,12 +149,10 @@
                                              highlight-inline-message?
                                              (str " " message)
 
-                                             highlight-colors?
+                                             colors?
                                              (color :red))
                                             ;; (str \newline (pad idx))
                                            ))
                                     line)))
                            (interpose \newline))
                           string-builder))))
-
-;; (u/highlight [3 2 1] {:in [2], :val 1} {}) "[_ _ 1]\n     ^"

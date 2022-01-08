@@ -36,8 +36,8 @@
   {:registry registry-ref
    ;; use (memoize s/conform) for fast lookup
    :conform (memoize s/conform)
+   :colors? false
    :highlight? true
-   :highlight-colors? false
    :highlight-inline-message? true
    :highlight-fringe? true})
 
@@ -120,7 +120,7 @@
   "Like spec explain, but uses lingo printer"
   ([ed] (explain-printer ed nil))
   ([{:as _ed :clojure.spec.alpha/keys [problems]}
-    {:as _opts :keys [highlight? highlight-fringe?]}]
+    {:as _opts :keys [colors? highlight? highlight-fringe?]}]
    (if (seq problems)
      (doseq [{:as _problem
               :exoscale.lingo.explain/keys [message highlight]
@@ -128,9 +128,13 @@
              :let [spec (last via)]]
        (if (and highlight? highlight)
          (do
-           (if spec
-             (print (impl/format "Invalid %s" (pr-str spec)))
-             (print "Invalid value"))
+           (print
+            (cond-> (if spec
+                      (str "Invalid " (pr-str spec))
+                      "Invalid value")
+              colors?
+              (u/color :red)))
+
            (newline)
            (newline)
            (when-not (empty? in)
@@ -336,4 +340,10 @@
                  (fn [[_ {:keys [min max]}] _opts]
                    (impl/format "should be an Integer between %d %d" min max)))
 
-;; (explain-data (s/coll-of int?) [{:foox :bar}])
+(comment
+  (s/def :foo/t-shirts (s/coll-of :foo/t-shirt))
+  (s/def :foo/t-shirt (s/keys :req-un [:foo/size :foo/color]))
+  (s/def :foo/size (s/int-in 1 3))
+  (s/def :foo/color #{:red :blue :green})
+
+  (exoscale.lingo/explain :foo/t-shirts [{:size 5 :color :pink}] {:colors? true}))
