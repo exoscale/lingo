@@ -129,7 +129,7 @@
        (if (and highlight? highlight)
          (do
            (if spec
-             (print "--> " (impl/format "Invalid %s" (pr-str spec)))
+             (print (impl/format "Invalid %s" (pr-str spec)))
              (print "Invalid value"))
            (newline)
            (newline)

@@ -62,29 +62,36 @@ Ok, now examples:
 First out of the box, without any custom message added to a spec:
 
 ```clj
-(s/def :foo/t-shirt (s/keys :req-un [:foo/sizes]))
-(s/def :foo/sizes (s/coll-of :foo/size))
+(s/def :foo/t-shirts (s/coll-of :foo/t-shirt))
+(s/def :foo/t-shirt (s/keys :req-un [:foo/size :foo/color]))
 (s/def :foo/size (s/int-in 1 3))
+(s/def :foo/color #{:red :blue :green})
 
-(exoscale.lingo/explain :foo/t-shirt {:sizes [5 :yolo]})
+(exoscale.lingo/explain :foo/t-shirts [{:size 5 :color :pink}])
 ```
 ```text
-5 in `sizes[0]` is an invalid :foo/size - should be an Integer between 1 3
+Invalid :foo/size
 
-{:sizes [5 _]}
-         ^
-:yolo in `sizes[1]` is an invalid :foo/size - should be an Integer
+--> in `[0].size`
+ |
+ |  [{:size 5, :color _}]
+ |          ^ should be an Integer between 1 3
+ |
 
-{:sizes [_ :yolo]}
-           ^^^^^
+Invalid :foo/color
+
+--> in `[0].color`
+ |
+ |  [{:size _, :color :pink}]
+ |                    ^^^^^ should be one of :blue, :green, :red
 ```
 
 Let's see how it's done under the hood
 ```clj
-(exoscale.lingo/explain-data :foo/t-shirt {:sizes [5 :yolo]})
+(exoscale.lingo/explain-data :foo/t-shirts [{:size 5 :color :pink}])
 
 #:clojure.spec.alpha{:problems
-                     ({:path [:sizes],
+                     ({:path [:size],
                        :exoscale.lingo.explain.pred/spec
                        :exoscale.lingo.pred/int-in-range,
                        :pred
@@ -92,8 +99,8 @@ Let's see how it's done under the hood
                         [%]
                         (clojure.spec.alpha/int-in-range? 1 3 %)),
                        :exoscale.lingo.explain/highlight
-                       "{:sizes [5 _]}\n         ^",
-                       :via [:foo/t-shirt :foo/sizes :foo/size],
+                       "[{:size 5, :color _}]\n        ^ should be an Integer between 1 3",
+                       :via [:foo/t-shirts :foo/t-shirt :foo/size],
                        :val 5,
                        :exoscale.lingo.explain.pred/message
                        "should be an Integer between 1 3",
@@ -101,24 +108,25 @@ Let's see how it's done under the hood
                        "should be an Integer between 1 3",
                        :exoscale.lingo.explain.pred/vals
                        [:_ {:_ %, :min 1, :max 3}],
-                       :exoscale.lingo.explain/path "sizes[0]",
-                       :in [:sizes 0]}
-                      {:path [:sizes],
+                       :exoscale.lingo.explain/path "[0].size",
+                       :in [0 :size]}
+                      {:path [:color],
                        :exoscale.lingo.explain.pred/spec
-                       :exoscale.lingo.pred/symbol,
-                       :pred clojure.core/int?,
+                       :exoscale.lingo.pred/set,
+                       :pred #{:green :red :blue},
                        :exoscale.lingo.explain/highlight
-                       "{:sizes [_ :yolo]}\n           ^^^^^",
-                       :via [:foo/t-shirt :foo/sizes :foo/size],
-                       :val :yolo,
+                       "[{:size _, :color :pink}]\n                  ^^^^^ should be one of :blue, :green, :red",
+                       :via [:foo/t-shirts :foo/t-shirt :foo/color],
+                       :val :pink,
                        :exoscale.lingo.explain.pred/message
-                       "should be an Integer",
-                       :exoscale.lingo.explain/message "should be an Integer",
-                       :exoscale.lingo.explain.pred/vals clojure.core/int?,
-                       :exoscale.lingo.explain/path "sizes[1]",
-                       :in [:sizes 1]}),
-                     :spec :foo/t-shirt,
-                     :value {:sizes [5 :yolo]}}
+                       "should be one of :blue, :green, :red",
+                       :exoscale.lingo.explain/message
+                       "should be one of :blue, :green, :red",
+                       :exoscale.lingo.explain.pred/vals #{:green :red :blue},
+                       :exoscale.lingo.explain/path "[0].color",
+                       :in [0 :color]}),
+                     :spec :foo/t-shirts,
+                     :value [{:size 5, :color :pink}]}
 
 ```
 
