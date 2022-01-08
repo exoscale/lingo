@@ -42,7 +42,8 @@
 (defn x-fix-spec-quirks
   [value]
   (map (fn [pb]
-         ;; CLJ-2682
+         ;; workaround for CLJ-2682 maybe we should also patch :path, but for
+         ;; now we do not use it so we don't have to care
          (assoc pb :in (impl/fix-map-path value (:in pb))))))
 
 (defn x-extend-pred-data
@@ -341,4 +342,4 @@
   (s/def :foo/size (s/int-in 1 3))
   (s/def :foo/color #{:red :blue :green})
 
-  (exoscale.lingo/explain :foo/t-shirts [{:size 5 :color :pink}] {:colors? true}))
+  (exoscale.lingo/explain-data :foo/t-shirts [{:size 5 :color :pink}] {:colors? true}))
