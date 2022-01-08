@@ -184,7 +184,6 @@
     {:foo/age 10}
     "#:foo{:age 10} is an invalid :foo/agent - missing key :foo/person\n"
 
-
     (do
       (alter-var-root #'*opts* assoc :hide-keyword-namespaces? true)
       (s/def :foo/agent (s/keys :req [:foo/person :foo/age])))
@@ -265,8 +264,8 @@
 
 (deftest highlight-test
   (are [input path output]
-      (= (u/highlight input path {})
-         output)
+       (= (u/highlight input path {})
+          output)
 
     [3 2 1] {:in [2] :val 1} "[_ _ 1]\n     ^"
 
@@ -297,18 +296,15 @@
     {:in [:a :bar] :val 255555}
     "{:a {:bar 255555, :c _, :d _, :e _}}\n          ^^^^^^"
 
-    ;; multiline hl output
+    ;; ;; multiline hl output
     {:aaaaaaaaaaaaa
      {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
     {:in [:aaaaaaaaaaaaa :c] :val 33333}
     "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}")
-  (is (= ["[1]\n ^\n should be a string with bla bla bla"]
-         (->> (l/explain-data ::things [1] {:highlight? true
-                                           :highlight-inline-message? true})
-                :clojure.spec.alpha/problems
-                (map :exoscale.lingo.explain/highlight)))))
-
-(l/explain-data string? 1)
+  (is (= ["[1]\n ^ should be a string with bla bla bla"]
+         (->> (l/explain-data ::things [1] {:highlight? true})
+              :clojure.spec.alpha/problems
+              (map :exoscale.lingo.explain/highlight)))))
 
 (deftest test-group-keys
   (is (= "missing keys :age, :person"
@@ -320,13 +316,8 @@
   (is (= #{"missing keys :age, :person"
            "missing keys :names"}
          (->> (l/explain-data (s/tuple :foo/agent2 :foo/person)
-                             [{} {}]
-                             {:group-missing-keys? true})
-             :clojure.spec.alpha/problems
-             (map :exoscale.lingo.explain/message)
-             set))))
-
-(do
-  (println "-------------------------")
-  (l/explain-data ::things [1] {:highlight? true
-                                :highlight-inline-message? true}))
+                              [{} {}]
+                              {:group-missing-keys? true})
+              :clojure.spec.alpha/problems
+              (map :exoscale.lingo.explain/message)
+              set))))

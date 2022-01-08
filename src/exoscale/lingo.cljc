@@ -37,8 +37,15 @@
    ;; use (memoize s/conform) for fast lookup
    :conform (memoize s/conform)
    :highlight? true
-   :highlight-inline-message? false
-   :highlight-colors? false})
+   :highlight-colors? false
+   :highlight-inline-message? true
+   :highlight-fringe? true})
+
+(defn x-fix-spec-quirks
+  [value]
+  (map (fn [pb]
+         ;; CLJ-2682
+         (assoc pb :in (impl/fix-map-path value (:in pb))))))
 
 (defn x-extend-pred-data
   [opts]
@@ -94,7 +101,8 @@
                        (if highlight?
                          (x-highlight value opts)
                          identity))
-                      (cond->> (eduction (x-extend-spec-data opts)
+                      (cond->> (eduction (x-fix-spec-quirks value)
+                                         (x-extend-spec-data opts)
                                          (x-extend-pred-data opts)
                                          pbs)
                         group-missing-keys?
@@ -112,26 +120,30 @@
   "Like spec explain, but uses lingo printer"
   ([ed] (explain-printer ed nil))
   ([{:as _ed :clojure.spec.alpha/keys [problems]}
-    {:as _opts :keys [highlight? :highlight-inline-message?]}]
+    {:as _opts :keys [highlight? highlight-fringe?]}]
    (if (seq problems)
      (doseq [{:as _problem
               :exoscale.lingo.explain/keys [message highlight]
               :keys [via in val pred]} problems
              :let [spec (last via)]]
-       (if highlight-inline-message?
+       (if (and highlight? highlight)
          (do
            (if spec
-             (print (impl/format "Invalid %s" (pr-str spec)))
+             (print "--> " (impl/format "Invalid %s" (pr-str spec)))
              (print "Invalid value"))
-
+           (newline)
+           (newline)
            (when-not (empty? in)
-             (print (impl/format " in `%s`" (impl/path-str in))))
+             (print (impl/format "--> in `%s`" (impl/path-str in))))
+           ;; (print (str " " message))
+           (newline)
 
-           (when (and highlight? highlight)
-             (newline)
-             (newline)
-             (print highlight)
-             (newline)))
+           (println " |  ")
+           (print (cond-> highlight
+                    highlight-fringe?
+                    u/highlight-fringe))
+           (println "\n |  ")
+           (newline))
          (do
            (print (pr-str val))
 
@@ -160,15 +172,15 @@
    (set! clojure.spec.alpha/*explain-out*
          (let [opts (into default-opts opts)]
            (fn [ed]
-             (doto (explain-printer (explain-data* ed opts)
-                               opts)
-               prn))))))
+             (explain-printer (explain-data* ed opts)
+                              opts))))))
 
 (defn explain
   "Like spec explain, but uses lingo printer"
   ([spec value] (explain spec value nil))
   ([spec value opts]
-   (explain-printer (explain-data spec value (into default-opts opts)))))
+   (let [opts (into default-opts opts)]
+     (explain-printer (explain-data spec value opts) opts))))
 
 (defn explain-str
   "Like spec explain-str, but uses lingo printer"
@@ -323,3 +335,5 @@
                                    :max number?)))
                  (fn [[_ {:keys [min max]}] _opts]
                    (impl/format "should be an Integer between %d %d" min max)))
+
+;; (explain-data (s/coll-of int?) [{:foox :bar}])

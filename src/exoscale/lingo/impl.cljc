@@ -119,3 +119,21 @@
                                   :exoscale.lingo.explain.pred/spec :exoscale.lingo.pred/contains-keys
                                   :exoscale.lingo.explain.pred/vals {:keys missing-keys}))))
                    (vals mk-by-path))))))
+
+(defn fix-map-path
+  "In some cases the path for a map will refer to indexed values, this is a bug
+  https://clojure.atlassian.net/plugins/servlet/mobile?originPath=%2Fbrowse%2FCLJ-2682#issue/CLJ-2682"
+  [value path]
+  (if (and (associative? value)
+           (identical? ::empty (get-in value path ::empty)))
+    (-> (reduce (fn [[m prev-path] k]
+                  (let [m' (get m k ::empty)
+                        path (conj prev-path k)]
+                    (if (identical? ::empty m')
+                   ;; we have a hit on a broken path, we need to rewind by 1
+                      [m' prev-path]
+                      [m' path])))
+                [value []]
+                path)
+        second)
+    path))

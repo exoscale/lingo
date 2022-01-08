@@ -78,12 +78,19 @@
           (string-builder)
           (repeat i \space)))
 
-(defn- justify [s idx]
+(defn- justify-error [s idx]
   (let [pad' (pad idx)]
     (transduce (comp (map-indexed (fn [i s]
                                     (cond->> s
                                       (not (zero? i))
                                       (str pad'))))
+                     (interpose \newline))
+               string-builder
+               (str/split-lines s))))
+
+(defn highlight-fringe [s]
+  (let [lead " |  "]
+    (transduce (comp (map (fn [s] (str lead s)))
                      (interpose \newline))
                string-builder
                (str/split-lines s))))
@@ -98,13 +105,12 @@
   [line val idx]
   (str/replace line
                (str relevant-mark)
-               (justify val idx)))
+               (justify-error val idx)))
 
 (defn- prep-val
   "Replaces error value with placeholder, then pprint without newline char at the end"
   [m in]
   (pp-str (focus m in {:match-fn (constantly relevant-mark)})))
-
 
 (def colors
   {:red "\u001b[31m"
@@ -119,29 +125,36 @@
 (defn highlight
   [value
    {:as _pb
-    :keys [in val]
-    :exoscale.lingo.explain/keys [message]}
-   {:as _opts :keys [highlight-inline-message? highlight-colors?]}]
-  (->> (prep-val value in)
-       str/split-lines
-       (transduce (comp
-                   (map (fn [line]
-                          (if-let [idx (relevant-mark-index line)]
-                            (let [s (pp-str val)]
-                              (str (replace-mark line
-                                                 (cond-> s
-                                                    highlight-colors?
-                                                    (color :red))
-                                                 idx)
-                                   \newline
-                                   (cond-> (marker idx (width s))
-                                     highlight-colors?
-                                     (color :red))
-                                   (when (and highlight-inline-message? message)
-                                     (str \newline (pad idx)
-                                          (cond-> message
-                                            highlight-colors?
-                                            (color :cyan))))))
-                            line)))
-                   (interpose \newline))
-                  string-builder)))
+    :keys [in val pred]
+    :exoscale.lingo.explain/keys [message]
+    :or {message (str "Does not conform to " pred)}}
+   {:as _opts :keys [highlight-colors?
+                     highlight-inline-message?]}]
+  (cond-> (->> (prep-val value in)
+               str/split-lines
+               (transduce (comp
+                           (map (fn [line]
+                                   ;; if line contains relevant value, add placholder
+                                   ;; with rendered error
+                                  (if-let [idx (relevant-mark-index line)]
+                                    (let [s (pp-str val)]
+                                      (str (replace-mark line
+                                                         (cond-> s
+                                                           highlight-colors?
+                                                           (color :red))
+                                                         idx)
+                                           \newline
+                                           (cond-> (str (marker idx (width s)))
+
+                                             highlight-inline-message?
+                                             (str " " message)
+
+                                             highlight-colors?
+                                             (color :red))
+                                            ;; (str \newline (pad idx))
+                                           ))
+                                    line)))
+                           (interpose \newline))
+                          string-builder))))
+
+;; (u/highlight [3 2 1] {:in [2], :val 1} {}) "[_ _ 1]\n     ^"
