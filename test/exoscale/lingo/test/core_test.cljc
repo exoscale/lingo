@@ -27,7 +27,8 @@
 
 (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
 
-(def ^:dynamic *opts* {:highlight? false})
+(def ^:dynamic *opts* {:highlight? false
+                       :header? false})
 
 (deftest test-outputs
   (are [spec val output] (= (l/explain-str spec val *opts*)

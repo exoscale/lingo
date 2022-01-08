@@ -35,6 +35,7 @@
 (def default-opts
   {:registry registry-ref
    :conform (memoize s/conform)
+   :header? true
    :colors? false
    :path? true
    :message? true
@@ -88,7 +89,8 @@
   (map (fn [{:keys [in] :as pb}]
          (cond-> pb
            (seq in)
-           (assoc :exoscale.lingo.explain/highlight (u/highlight val pb opts))))))
+           (assoc :exoscale.lingo.explain/highlight
+                  (u/highlight val pb opts))))))
 
 (defn explain-data*
   [{:as explain-data :clojure.spec.alpha/keys [value]}
@@ -124,49 +126,60 @@
   "Like spec explain, but uses lingo printer"
   ([ed] (explain-printer ed nil))
   ([{:as _ed :clojure.spec.alpha/keys [problems]}
-    {:as _opts :keys [colors? highlight?]}]
+    {:as _opts :keys [colors? highlight? header?]}]
    (if (seq problems)
-     (doseq [{:as _problem
-              :exoscale.lingo.explain/keys [message highlight]
-              :keys [via in val pred]} problems
-             :let [spec (last via)]]
-       (if (and highlight? highlight)
-         (do
-           (print
-            (cond-> (if spec
-                      (str "Invalid " (pr-str spec))
-                      "Invalid value")
-              colors?
-              (u/color :red)))
+     (do
+       (when header?
+         (println (str (count problems) " errors found"))
+         (newline))
+       (doseq [{:as _problem
+               :exoscale.lingo.explain/keys [message highlight]
+               :keys [via in val pred]} problems
+              :let [spec (last via)]]
+        (if (and highlight? highlight)
+          (do
+            (print (str "--> Invalid "))
+            (print
+             (cond-> (if spec
+                       (pr-str spec)
+                       "value")
+               colors?
+               (u/color :red)))
 
-           (newline)
-           (newline)
-           (when-not (empty? in)
-             (print (impl/format "--> in `%s`" (impl/path-str in))))
-           (newline)
+            ;; (newline)
+            ;; (newline)
+            (when-not (empty? in)
+              (print (impl/format " in `%s`"
+                                  (cond-> (impl/path-str in)
+                                    colors?
+                                    (u/color :cyan))))
+              (newline))
 
-           (println " |  ")
-           (print (u/highlight-fringe highlight))
-           (println "\n |  ")
-           (newline))
-         (do
-           (print (pr-str val))
+            (let [fringe "  |  " ]
+              (println fringe)
+              (print (u/prefix-lines highlight fringe))
+              (newline)
+              (println fringe))
 
-           (when-not (empty? in)
-             (print (impl/format " in `%s`" (impl/path-str in))))
+            (newline))
+          (do
+            (print (pr-str val))
 
-           (if spec
-             (print (impl/format " is an invalid %s" (pr-str spec)))
-             (print " is invalid"))
+            (when-not (empty? in)
+              (print (impl/format " in `%s`" (impl/path-str in))))
 
-           (print " - ")
-           (print (or message (impl/abbrev pred)))
-           (newline)
+            (if spec
+              (print (impl/format " is an invalid %s" (pr-str spec)))
+              (print " is invalid"))
 
-           (when (and highlight? highlight)
-             (newline)
-             (print highlight)
-             (newline)))))
+            (print " - ")
+            (print (or message (impl/abbrev pred)))
+            (newline)
+
+            (when (and highlight? highlight)
+              (newline)
+              (print highlight)
+              (newline))))))
 
      (println "Success!"))))
 
@@ -347,4 +360,4 @@
   (s/def :foo/size (s/int-in 1 3))
   (s/def :foo/color #{:red :blue :green})
 
-  (exoscale.lingo/explain-data :foo/t-shirts [{:size 5 :color :pink}] {:colors? true}))
+  (exoscale.lingo/explain :foo/t-shirts [{:size 5 :color :pink}] {:colors? true}))

@@ -88,12 +88,11 @@
                string-builder
                (str/split-lines s))))
 
-(defn highlight-fringe [s]
-  (let [lead " |  "]
-    (transduce (comp (map (fn [s] (str lead s)))
-                     (interpose \newline))
-               string-builder
-               (str/split-lines s))))
+(defn prefix-lines [s prefix]
+  (transduce (comp (map (fn [s] (str prefix s)))
+                   (interpose \newline))
+             string-builder
+             (str/split-lines s)))
 
 (def ^:private relevant-mark 'exoscale.lingo/relevant)
 
