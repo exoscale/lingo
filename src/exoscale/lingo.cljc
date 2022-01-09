@@ -36,6 +36,7 @@
   {:registry registry-ref
    :conform (memoize s/conform)
    :header? true
+   :focus? true
    :colors? false
    :path? true
    :message? true

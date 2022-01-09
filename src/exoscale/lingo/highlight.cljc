@@ -108,8 +108,10 @@
 
 (defn- prep-val
   "Replaces error value with placeholder, then pprint without newline char at the end"
-  [m in]
-  (pp-str (focus m in {:match-fn (constantly relevant-mark)})))
+  [m in {:as _opts :keys [focus?]}]
+  (pp-str (focus m in (cond-> {:match-fn (constantly relevant-mark)}
+                        (not focus?)
+                        (assoc :mismatch-fn identity)))))
 
 (def colors
   {:red "\u001b[31m"
@@ -127,9 +129,8 @@
     :keys [in val pred]
     :exoscale.lingo.explain/keys [message]
     :or {message (str "Does not conform to " pred)}}
-   {:as _opts :keys [colors?
-                     highlight-inline-message?]}]
-  (cond-> (->> (prep-val value in)
+   {:as opts :keys [colors? highlight-inline-message?]}]
+  (cond-> (->> (prep-val value in opts)
                str/split-lines
                (transduce (comp
                            (map (fn [line]

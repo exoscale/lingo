@@ -266,7 +266,7 @@
 
 (deftest highlight-test
   (are [input path output]
-       (= (u/highlight input path {})
+       (= (u/highlight input path {:focus? true})
           output)
 
     [3 2 1] {:in [2] :val 1} "[_ _ 1]\n     ^"
