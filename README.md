@@ -3,18 +3,26 @@
 > The language and speech, especially the jargon, slang, or argot, of
 > a particular field, group, or individual
 
-Trying to make spec explain message more usable with small, composable additions.
+Trying to make spec explain message more usable with small, composable
+additions.
 
-The goal is to provide the spec users with more data from errors and means to
-render helpful error messages.
+The goal is to provide the spec users with more data from errors and and gibe
+means to render helpful error messages.
 
 It differs from other similar libraries in that the focus is more on
-explain-data enrichment first, then leveraging this for potential rendering.
+(explain-)data first, then leveraging this for potential rendering.  You can use
+lingo without it's error rendering facilities in order to just infer more
+information from your errors, as data.
 
 In some cases it's better to leave the `problems` as a specialized collection
 items and be very detailed per problem, in others you prefer to group things to
 show more compact errors (typically like showing a set of missing keys in a
 map).
+
+Internally building this data is done via transducers that are run against the
+explain-data problems. It's quite easy to pull this appart and build your own if
+want/need to.
+
 
 ## Documentation
 
@@ -236,7 +244,11 @@ https://github.com/exoscale/lingo/blob/master/test/exoscale/lingo/test/core_test
 * `:conform` defaults to `(memoize s/conform)` the function used to destructure predicate forms
 * `:highlight?` defaults to true, whether we should try to provide an highlight of the error value
 * `:highlight-inline-message?` defaults to false, whether we should show the explain message inline with the error marker in the highlight
-* `:highlight-colors?` defaults to false, whether to use terminal colors with the highlight
+* `:colors?` defaults to false, whether to use terminal colors for the highlight
+* `:path?` defaults to true, whether to include a prettified path (js like path vs get-in/associative path)
+* `:message?` defaults to tru, whether to include string messages derived from the pred/spec data extracted
+* `:header?` defaults to true, whether to show a header with problems count in `explain` message
+* `:focus?` defaults to true, whether to blank out the values that are not relevant in the error payload
 
 ### replacing clojure spec printer
 
