@@ -243,10 +243,10 @@ https://github.com/exoscale/lingo/blob/master/test/exoscale/lingo/test/core_test
 * `:registry` defaults to lingo's internal registry, but you can have your own, could be handy if you need to support multiple languages for instance
 * `:conform` defaults to `(memoize s/conform)` the function used to destructure predicate forms
 * `:highlight?` defaults to true, whether we should try to provide an highlight of the error value
-* `:highlight-inline-message?` defaults to false, whether we should show the explain message inline with the error marker in the highlight
+* `:highlight-inline-message?` defaults to true, whether we should show the explain message inline with the error marker in the highlight
 * `:colors?` defaults to false, whether to use terminal colors for the highlight
 * `:path?` defaults to true, whether to include a prettified path (js like path vs get-in/associative path)
-* `:message?` defaults to tru, whether to include string messages derived from the pred/spec data extracted
+* `:message?` defaults to true, whether to include string messages derived from the pred/spec data extracted
 * `:header?` defaults to true, whether to show a header with problems count in `explain` message
 * `:focus?` defaults to true, whether to blank out the values that are not relevant in the error payload
 * `:group-missing-keys?` defaults to true, whether to group all "missing keys" problems for the same map into a single problem.
