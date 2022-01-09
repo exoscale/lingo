@@ -35,7 +35,7 @@
 
 (def default-opts
   {:registry registry-ref
-   :conform s/conform
+   :conform (memoize s/conform)
    :header? true
    :focus? true
    :colors? false

@@ -249,6 +249,8 @@ https://github.com/exoscale/lingo/blob/master/test/exoscale/lingo/test/core_test
 * `:message?` defaults to tru, whether to include string messages derived from the pred/spec data extracted
 * `:header?` defaults to true, whether to show a header with problems count in `explain` message
 * `:focus?` defaults to true, whether to blank out the values that are not relevant in the error payload
+* `:group-missing-keys?` defaults to true, whether to group all "missing keys" problems for the same map into a single problem.
+* `:group-or-problems?` defaults to true, whether to group all problems concerning the same value into one: typically that's used for nilable, since by default a nilable failure will cause 2 problems and also for s/or clauses (to be able to express "should be a string OR an int" instead of having 2 problems).
 
 ### replacing clojure spec printer
 
