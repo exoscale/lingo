@@ -328,9 +328,18 @@
 
 (deftest test-group-or-keys
   (s/def ::test-group-or-keys (s/nilable string?))
+  (s/def ::test-group-or-keys2 (s/or :str string? :int int?))
   (is (= #{"should be a String OR should be nil"}
          (->> (l/explain-data ::test-group-or-keys
                               1
+                              {:group-or-problems? true
+                               :group-missing-keys? true})
+              :clojure.spec.alpha/problems
+              (map :exoscale.lingo.explain/message)
+              set)))
+    (is (= #{"should be a String OR should be an Integer"}
+         (->> (l/explain-data ::test-group-or-keys2
+                              :kw
                               {:group-or-problems? true
                                :group-missing-keys? true})
               :clojure.spec.alpha/problems
