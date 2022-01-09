@@ -41,7 +41,9 @@
    :path? true
    :message? true
    :highlight? true
-   :highlight-inline-message? true})
+   :highlight-inline-message? true
+   :group-missing-keys? true
+   :group-or-problems? true})
 
 (defn x-fix-spec-quirks
   [value]
