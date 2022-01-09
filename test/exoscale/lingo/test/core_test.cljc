@@ -29,6 +29,7 @@
 
 (def ^:dynamic *opts* {:highlight? false
                        :group-missing-keys? false
+                       :group-or-problems? false
                        :header? false})
 
 (deftest test-outputs
@@ -309,7 +310,7 @@
               :clojure.spec.alpha/problems
               (map :exoscale.lingo.explain/highlight)))))
 
-(deftest test-group-keys
+(deftest test-group-map-keys
   (is (= "missing keys :age, :person"
          (-> (l/explain-data :foo/agent2 {} {:group-missing-keys? true})
              :clojure.spec.alpha/problems
@@ -324,6 +325,18 @@
               :clojure.spec.alpha/problems
               (map :exoscale.lingo.explain/message)
               set))))
+
+(deftest test-group-or-keys
+  (s/def ::test-group-or-keys (s/nilable string?))
+  (is (= #{"should be a String OR should be nil"}
+         (->> (l/explain-data ::test-group-or-keys
+                              1
+                              {:group-or-problems? true
+                               :group-missing-keys? true})
+              :clojure.spec.alpha/problems
+              (map :exoscale.lingo.explain/message)
+              set))))
+
 
 (deftest fix-map-path-test
   (is (= [] (impl/fix-map-path [] [])))

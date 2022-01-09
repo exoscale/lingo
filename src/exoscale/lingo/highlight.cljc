@@ -1,6 +1,7 @@
 (ns exoscale.lingo.highlight
   (:require [clojure.pprint :as pp]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [exoscale.lingo.utils :as u]))
 
 (defn- subpath?
   "True'ish if `x` is a subpath of `y`. Could use subvec but will do for now"
@@ -47,11 +48,6 @@
            m)
      :else (mismatch-fn m))))
 
-(defn- string-builder
-  ([] (StringBuilder.))
-  ([^StringBuilder sb x] (.append sb x))
-  ([^StringBuilder sb] (.toString sb)))
-
 (defn- marker
   [offset len]
   (->> (concat (repeat offset " ")
@@ -74,8 +70,8 @@
           (str/split-lines s)))
 
 (defn- pad [i]
-  (reduce string-builder
-          (string-builder)
+  (reduce u/string-builder
+          (u/string-builder)
           (repeat i \space)))
 
 (defn- justify-error [s idx]
@@ -85,13 +81,13 @@
                                       (not (zero? i))
                                       (str pad'))))
                      (interpose \newline))
-               string-builder
+               u/string-builder
                (str/split-lines s))))
 
 (defn prefix-lines [s prefix]
   (transduce (comp (map (fn [s] (str prefix s)))
                    (interpose \newline))
-             string-builder
+             u/string-builder
              (str/split-lines s)))
 
 (def ^:private relevant-mark 'exoscale.lingo/relevant)
@@ -150,9 +146,7 @@
                                              (str " " message)
 
                                              colors?
-                                             (color :red))
-                                            ;; (str \newline (pad idx))
-                                           ))
+                                             (color :red))))
                                     line)))
                            (interpose \newline))
-                          string-builder))))
+                          u/string-builder))))

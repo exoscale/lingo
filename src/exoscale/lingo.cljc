@@ -1,9 +1,10 @@
 (ns exoscale.lingo
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
-            [exoscale.lingo.highlight :as u]
-            [exoscale.lingo.impl :as impl]
-            [exoscale.lingo :as l]))
+            [exoscale.lingo :as l]
+            [exoscale.lingo.highlight :as h]
+            [exoscale.lingo.utils :as u]
+            [exoscale.lingo.impl :as impl]))
 
 (def registry-ref (atom (merge #:exoscale.lingo.registry.spec{:message {}}
                                #:exoscale.lingo.registry.pred{:conformers #{}
@@ -34,7 +35,7 @@
 
 (def default-opts
   {:registry registry-ref
-   :conform (memoize s/conform)
+   :conform s/conform
    :header? true
    :focus? true
    :colors? false
@@ -93,30 +94,35 @@
          (cond-> pb
            (seq in)
            (assoc :exoscale.lingo.explain/highlight
-                  (u/highlight val pb opts))))))
+                  (h/highlight val pb opts))))))
 
 (defn explain-data*
   [{:as explain-data :clojure.spec.alpha/keys [value]}
-   {:as opts :keys [highlight? group-missing-keys? path? message?]}]
+   {:as opts :keys [highlight? group-missing-keys? group-or-problems?
+                    path? message?]}]
   (update explain-data
           :clojure.spec.alpha/problems
           (fn [pbs]
-            (sequence (comp
-                       (if message? (x-extend-message opts) identity)
-                       (if path? (x-extend-path opts) identity)
-                       (if highlight? (x-highlight value opts) identity))
-                      ;; the stuff we will always do first, fixing spec bugs,
-                      ;; extending with our spec/pred data. We need to do this
-                      ;; first because of grouping, this way we can avoid to do
-                      ;; useless work that would be squashed by a potential
-                      ;; merge of problems
-                      (cond->> (eduction (x-fix-spec-quirks value)
-                                         (x-extend-spec-data opts)
-                                         (x-extend-pred-data opts)
-                                         pbs)
-                        group-missing-keys?
-                        impl/group-missing-keys
-                        :then (sort-by #(- (count (:path %)))))))))
+            (-> (sequence (comp
+                           (if message? (x-extend-message opts) identity)
+                           (if path? (x-extend-path opts) identity)
+                           (if highlight? (x-highlight value opts) identity))
+                          ;; the stuff we will always do first, fixing spec bugs,
+                          ;; extending with our spec/pred data. We need to do this
+                          ;; first because of grouping, this way we can avoid to do
+                          ;; useless work that would be squashed by a potential
+                          ;; merge of problems
+                          (cond->> (eduction (x-fix-spec-quirks value)
+                                             (x-extend-spec-data opts)
+                                             (x-extend-pred-data opts)
+                                             pbs)
+                            group-missing-keys?
+                            impl/group-missing-keys
+
+                            group-or-problems?
+                            impl/group-or-problems
+
+                            :then (sort-by #(- (count (:path %))))))))))
 
 (defn explain-data
   ([spec value]
@@ -136,53 +142,53 @@
          (println (str (count problems) " errors found"))
          (newline))
        (doseq [{:as _problem
-               :exoscale.lingo.explain/keys [message highlight]
-               :keys [via in val pred]} problems
-              :let [spec (last via)]]
-        (if (and highlight? highlight)
-          (do
-            (print (str "--> Invalid "))
-            (print
-             (cond-> (if spec
-                       (pr-str spec)
-                       "value")
-               colors?
-               (u/color :red)))
+                :exoscale.lingo.explain/keys [message highlight]
+                :keys [via in val pred]} problems
+               :let [spec (last via)]]
+         (if (and highlight? highlight)
+           (do
+             (print (str "--> Invalid "))
+             (print
+              (cond-> (if spec
+                        (pr-str spec)
+                        "value")
+                colors?
+                (h/color :red)))
 
-            ;; (newline)
-            ;; (newline)
-            (when-not (empty? in)
-              (print (impl/format " in `%s`"
-                                  (cond-> (impl/path-str in)
-                                    colors?
-                                    (u/color :cyan))))
-              (newline))
+             ;; (newline)
+             ;; (newline)
+             (when-not (empty? in)
+               (print (impl/format " in `%s`"
+                                   (cond-> (impl/path-str in)
+                                     colors?
+                                     (h/color :cyan))))
+               (newline))
 
-            (let [fringe "  |  " ]
-              (println fringe)
-              (print (u/prefix-lines highlight fringe))
-              (newline)
-              (println fringe))
+             (let [fringe "  |  "]
+               (println fringe)
+               (print (h/prefix-lines highlight fringe))
+               (newline)
+               (println fringe))
 
-            (newline))
-          (do
-            (print (pr-str val))
+             (newline))
+           (do
+             (print (pr-str val))
 
-            (when-not (empty? in)
-              (print (impl/format " in `%s`" (impl/path-str in))))
+             (when-not (empty? in)
+               (print (impl/format " in `%s`" (impl/path-str in))))
 
-            (if spec
-              (print (impl/format " is an invalid %s" (pr-str spec)))
-              (print " is invalid"))
+             (if spec
+               (print (impl/format " is an invalid %s" (pr-str spec)))
+               (print " is invalid"))
 
-            (print " - ")
-            (print (or message (impl/abbrev pred)))
-            (newline)
+             (print " - ")
+             (print (or message (impl/abbrev pred)))
+             (newline)
 
-            (when (and highlight? highlight)
-              (newline)
-              (print highlight)
-              (newline))))))
+             (when (and highlight? highlight)
+               (newline)
+               (print highlight)
+               (newline))))))
 
      (println "Success!"))))
 
@@ -290,6 +296,15 @@
                                                (:hide-keyword-namespaces? opts)
                                                (-> name keyword)))
                                        (str/join ", ")))))
+
+(set-pred-message! :exoscale.lingo.pred/or-pb-group
+                   (fn [{:keys [problems] :as  args} opts]
+                     (transduce (comp
+                                 (x-extend-message opts)
+                                 (map :exoscale.lingo.explain/message)
+                                 (interpose " OR "))
+                                u/string-builder
+                                problems)))
 
 (s/def ::count+arg (s/spec (s/cat :_ #{'count} :sym simple-symbol?)))
 

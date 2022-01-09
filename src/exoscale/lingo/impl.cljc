@@ -93,12 +93,19 @@
 
 ;;; grouping
 
+(defn- problems-by-path [pbs]
+  (group-by :in pbs))
+
+(defn missing-key-pb?
+  [pb]
+  (= (:exoscale.lingo.explain.pred/spec pb)
+     :exoscale.lingo.pred/contains-key))
+
 (defn- missing-keys-pbs-by-path [pbs]
-  (not-empty
-   (group-by (fn [{:as _pb :keys [path]}] path)
-             (filter #(= (:exoscale.lingo.explain.pred/spec %)
-                         :exoscale.lingo.pred/contains-key)
-                     pbs))))
+  (->> pbs
+       (filter missing-key-pb?)
+       problems-by-path
+       not-empty))
 
 (defn group-missing-keys
   [pbs]
@@ -121,6 +128,30 @@
                    (vals mk-by-path))))
     pbs))
 
+(defn group-or-problems
+  [pbs]
+  (if-let [;; filter out the ones with only 1 pb
+        or-pbs-by-path (into {}
+                             (filter #(and (-> % val count (>= 2))
+                                           (not (missing-key-pb? (first %)))))
+                             (problems-by-path pbs))]
+    (let [or-pbs (into #{} (comp (map val) cat) or-pbs-by-path)]
+      (concat (remove (fn [pb] (contains? or-pbs pb)) pbs)
+                   (map (fn [pbs]
+                          (-> (first pbs)
+                              (assoc :pred (list 'or-pb-group '%)
+                                     :exoscale.lingo.explain.pred/spec :exoscale.lingo.pred/or-pb-group
+                                     :exoscale.lingo.explain.pred/vals
+                                     {:problems (map #(select-keys %
+                                                                   [:exoscale.lingo.explain.pred/spec
+                                                                    :exoscale.lingo.explain.pred/vals
+                                                                    :exoscale.lingo.explain.spec/message])
+                                                     pbs)})))
+                        (vals or-pbs-by-path))))
+    pbs))
+
+;; spec quirks handling
+
 (defn fix-map-path
   "In some cases the path for a map will refer to indexed values, this is a bug
   https://clojure.atlassian.net/plugins/servlet/mobile?originPath=%2Fbrowse%2FCLJ-2682#issue/CLJ-2682"
@@ -138,9 +169,3 @@
                 path)
         second)
     path))
-
-
-(defn group-or-problems
-  [pbs]
-
-  )
