@@ -69,22 +69,7 @@ First out of the box, without any custom message added to a spec:
 
 (exoscale.lingo/explain :foo/t-shirts [{:size 5 :color :pink}])
 ```
-```shell
-2 errors found
-
---> Invalid :foo/size in `[0].size`
-  |
-  |  [{:size 5, :color _}]
-  |          ^ should be an Integer between 1 3
-  |
-
---> Invalid :foo/color in `[0].color`
-  |
-  |  [{:size _, :color :pink}]
-  |                    ^^^^^ should be one of :blue, :green, :red
-  |
-
-```
+![colored-output-example](example.png)
 
 Let's see how it's done under the hood
 ```clj
