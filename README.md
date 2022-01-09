@@ -69,7 +69,7 @@ First out of the box, without any custom message added to a spec:
 
 (exoscale.lingo/explain :foo/t-shirts [{:size 5 :color :pink}])
 ```
-![colored-output-example](example.png)
+![colored-output-example](example.png){:height="50%" width="50%"}
 
 Let's see how it's done under the hood
 ```clj
