@@ -28,6 +28,7 @@
 (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
 
 (def ^:dynamic *opts* {:highlight? false
+                       :group-missing-keys? false
                        :header? false})
 
 (deftest test-outputs

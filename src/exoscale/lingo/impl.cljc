@@ -102,7 +102,7 @@
 
 (defn group-missing-keys
   [pbs]
-  (when-let [mk-by-path (missing-keys-pbs-by-path pbs)]
+  (if-let [mk-by-path (missing-keys-pbs-by-path pbs)]
     (let [missing-keys-pbs (into #{}
                                  (comp (map val) cat)
                                  mk-by-path)]
@@ -118,7 +118,8 @@
                            (assoc :pred (list  'contains-keys? '% missing-keys)
                                   :exoscale.lingo.explain.pred/spec :exoscale.lingo.pred/contains-keys
                                   :exoscale.lingo.explain.pred/vals {:keys missing-keys}))))
-                   (vals mk-by-path))))))
+                   (vals mk-by-path))))
+    pbs))
 
 (defn fix-map-path
   "In some cases the path for a map will refer to indexed values, this is a bug
@@ -137,3 +138,9 @@
                 path)
         second)
     path))
+
+
+(defn group-or-problems
+  [pbs]
+
+  )
