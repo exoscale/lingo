@@ -109,16 +109,6 @@
                         (not focus?)
                         (assoc :mismatch-fn identity)))))
 
-(def colors
-  {:red "\u001b[31m"
-   :yellow "\u001b[33m"
-   :blue "\u001b[34m"
-   :cyan "\u001b[36;1m"
-   :reset "\u001b[0m"})
-
-(defn color [s color]
-  (str (color colors) s (:reset colors)))
-
 (defn highlight
   [value
    {:as _pb
@@ -137,7 +127,7 @@
                                       (str (replace-mark line
                                                          (cond-> s
                                                            colors?
-                                                           (color :red))
+                                                           (u/color :red))
                                                          idx)
                                            \newline
                                            (cond-> (str (marker idx (width s)))
@@ -146,7 +136,7 @@
                                              (str " " message)
 
                                              colors?
-                                             (color :red))))
+                                             (u/color :red))))
                                     line)))
                            (interpose \newline))
                           u/string-builder))))

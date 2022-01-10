@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [format])
   (:require [clojure.walk :as walk]
             [clojure.spec.alpha :as s]
+            [exoscale.lingo.utils :as u]
             #?@(:cljs [[goog.string]
                        [goog.string.format]])))
 
@@ -73,23 +74,33 @@
             nil
             (spec-vals spec))))
 
+(defn spec-str
+  ([spec] (spec-str spec nil))
+  ([spec color]
+   (cond-> (pr-str spec)
+     color
+     (u/color color))))
+
 (defn path-str
-  [in]
-  (when (seq in)
-    (letfn [(mdot [s] (when (seq s) (str ".")))]
-      (reduce (fn [s segment]
-                (str s
-                     (cond
-                       (nat-int? segment)
-                       (format "[%d]" segment)
+  ([in] (path-str in nil))
+  ([in color]
+   (when (seq in)
+     (letfn [(mdot [s] (when (seq s) (str ".")))]
+       (cond-> (reduce (fn [s segment]
+                         (str s
+                              (cond
+                                (nat-int? segment)
+                                (format "[%d]" segment)
 
-                       (keyword? segment)
-                       (str (mdot s) (name segment))
+                                (keyword? segment)
+                                (str (mdot s) (name segment))
 
-                       :else
-                       (str (mdot s) (str segment)))))
-              nil
-              in))))
+                                :else
+                                (str (mdot s) (str segment)))))
+                       nil
+                       in)
+         color
+         (u/color color))))))
 
 ;;; grouping
 

@@ -139,7 +139,11 @@
    (if (seq problems)
      (do
        (when header?
-         (println (str (count problems) " errors found"))
+         (let [cnt (count problems)]
+           (println (str cnt
+                         (if (= 1 cnt)
+                           " error found"
+                           " errors found"))))
          (newline))
        (doseq [{:as _problem
                 :exoscale.lingo.explain/keys [message highlight]
@@ -149,19 +153,14 @@
            (do
              (print (str "--> Invalid "))
              (print
-              (cond-> (if spec
-                        (pr-str spec)
-                        "value")
-                colors?
-                (h/color :red)))
+              (if spec
+                (impl/spec-str spec (when colors? :red))
+                "value"))
 
              ;; (newline)
              ;; (newline)
              (when-not (empty? in)
-               (print (impl/format " in `%s`"
-                                   (cond-> (impl/path-str in)
-                                     colors?
-                                     (h/color :cyan))))
+               (print (impl/format " in `%s`" (impl/path-str in (when colors? :cyan))))
                (newline))
 
              (let [fringe "  |  "]
@@ -175,14 +174,18 @@
              (print (pr-str val))
 
              (when-not (empty? in)
-               (print (impl/format " in `%s`" (impl/path-str in))))
+               (print (impl/format " in `%s`"
+                                   (impl/path-str in (when colors? :cyan)))))
 
              (if spec
-               (print (impl/format " is an invalid %s" (pr-str spec)))
+               (print (impl/format " is an invalid %s"
+                                   (impl/spec-str spec (when colors? :red))))
                (print " is invalid"))
 
              (print " - ")
-             (print (or message (impl/abbrev pred)))
+             (print (cond-> (or message (impl/abbrev pred))
+                      colors?
+                      (u/color :red)))
              (newline)
 
              (when (and highlight? highlight)
@@ -389,9 +392,58 @@
                    (impl/format "should be an Integer between %d %d" min max)))
 
 (comment
-  (s/def :foo/t-shirts (s/coll-of :foo/t-shirt))
-  (s/def :foo/t-shirt (s/keys :req-un [:foo/size :foo/color]))
-  (s/def :foo/size (s/int-in 1 3))
-  (s/def :foo/color #{:red :blue :green})
+  (defn sep
+   []
+   (newline)
+   (println (apply str (repeat 80 "-")))
+   (newline))
 
-  (exoscale.lingo/explain :foo/t-shirts [{:size 5 :color :pink}] {:colors? true}))
+ (do
+   (s/def :foo/t-shirts (s/coll-of :foo/t-shirt))
+   (s/def :foo/t-shirt (s/keys :req-un [:foo/size :foo/color]))
+   (s/def :foo/size (s/int-in 1 3))
+   (s/def :foo/color #{:red :blue :green})
+
+   (explain :foo/t-shirts [{:size 5 :color :pink}] {:colors? true}) )
+
+
+ (do
+   (sep)
+   (s/def :foo/a-map (s/keys :req-un [:foo/size :foo/color]))
+   (explain (s/coll-of :foo/a-map) [{}] {:colors? true}))
+
+ (do
+   (sep)
+   (s/def :foo/a-map (s/keys :req-un [:foo/size :foo/color]))
+   (explain (s/nilable map?) :boom {:colors? true}))
+
+ (do
+   (sep)
+   (s/def ::cnt>1 #(> (count %) 1))
+   (explain ::cnt>1 [] {:colors? true}))
+
+ (do
+   (sep)
+   (s/def ::cnt>=1 #(>= (count %) 1))
+   (explain ::cnt>=1 [] {:colors? true}))
+
+ (do
+   ()
+   (s/def ::>=1 #(>= % 1))
+   (explain ::>=1 0 {:colors? true}))
+
+ (do
+   (sep)
+   (s/def ::coll-bounds-1 (s/coll-of any? :min-count 3))
+   (explain ::coll-bounds-1 [] {:colors? true}))
+
+ (do
+   (sep)
+   (s/def ::coll-bounds-2 (s/coll-of any? :count 3))
+   (explain-data ::coll-bounds-2 [] {:colors? true}))
+
+ (do
+   (sep)
+   (s/def ::set #{:a :b :c})
+   (explain (s/coll-of ::set) [:d] {:colors? true}))
+ )
