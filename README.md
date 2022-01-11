@@ -91,39 +91,27 @@ Let's see how it's done under the hood
 
 #:clojure.spec.alpha{:problems
                      ({:path [:size],
-                       :exoscale.lingo.explain.pred/spec
-                       :exoscale.lingo.pred/int-in-range,
-                       :pred
-                       (clojure.core/fn
-                        [%]
-                        (clojure.spec.alpha/int-in-range? 1 3 %)),
-                       :exoscale.lingo.explain/highlight
-                       "[{:size 5, :color _}]\n        ^ should be an Integer between 1 3",
                        :via [:foo/t-shirts :foo/t-shirt :foo/size],
                        :val 5,
-                       :exoscale.lingo.explain.pred/message
-                       "should be an Integer between 1 3",
-                       :exoscale.lingo.explain/message
-                       "should be an Integer between 1 3",
-                       :exoscale.lingo.explain.pred/vals
-                       [:_ {:_ %, :min 1, :max 3}],
-                       :exoscale.lingo.explain/path "[0].size",
-                       :in [0 :size]}
+                       :in [0 :size]
+                       :pred (clojure.core/fn [%] (clojure.spec.alpha/int-in-range? 1 3 %)),
+                       :exoscale.lingo.explain/highlight "[{:size 5, :color _}]\n        ^ should be an Integer between 1 3",
+                       :exoscale.lingo.explain.pred/spec :exoscale.lingo.pred/int-in-range,
+                       :exoscale.lingo.explain.pred/message "should be an Integer between 1 3",
+                       :exoscale.lingo.explain.pred/vals [:_ {:_ %, :min 1, :max 3}],
+                       :exoscale.lingo.explain/message "should be an Integer between 1 3",
+                       :exoscale.lingo.explain/path "[0].size"}
                       {:path [:color],
-                       :exoscale.lingo.explain.pred/spec
-                       :exoscale.lingo.pred/set,
                        :pred #{:green :red :blue},
-                       :exoscale.lingo.explain/highlight
-                       "[{:size _, :color :pink}]\n                  ^^^^^ should be one of :blue, :green, :red",
                        :via [:foo/t-shirts :foo/t-shirt :foo/color],
                        :val :pink,
-                       :exoscale.lingo.explain.pred/message
-                       "should be one of :blue, :green, :red",
-                       :exoscale.lingo.explain/message
-                       "should be one of :blue, :green, :red",
+                       :in [0 :color]
+                       :exoscale.lingo.explain.pred/spec :exoscale.lingo.pred/set,
+                       :exoscale.lingo.explain.pred/message "should be one of :blue, :green, :red",
                        :exoscale.lingo.explain.pred/vals #{:green :red :blue},
-                       :exoscale.lingo.explain/path "[0].color",
-                       :in [0 :color]}),
+                       :exoscale.lingo.explain/highlight "[{:size _, :color :pink}]\n                  ^^^^^ should be one of :blue, :green, :red",
+                       :exoscale.lingo.explain/message "should be one of :blue, :green, :red",
+                       :exoscale.lingo.explain/path "[0].color"}),
                      :spec :foo/t-shirts,
                      :value [{:size 5, :color :pink}]}
 
