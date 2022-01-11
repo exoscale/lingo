@@ -169,17 +169,21 @@ problem.
 There is this libary called clojure.spec that's pretty good to parse forms and extract information from them, we happen to use it to do just that:
 
 ``` clj
-(set-pred-error! (s/def ::int-in-range (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
+(s/def ::int-in-range (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
                         :min number?
                         :max number?
                         :_ #{'%}))
+
+(set-pred-error! ::int-in-range
                  (fn [{:keys [min max]} _opts]
                    (format "should be an Integer between %d %d" min max)))
 ```
 
-This will use the first argument to perform conforming against the
-pred in the explain-data problems and use the bound values with second
-argument, a function to generate a precise message.
+This will use the first argument to perform conforming against the pred in the
+explain-data problems. From there it will add the destructured values to the
+explain-data and also the key of the conformer that matched (here
+::int-in-range). From this conformer key and extracted values you/lingo are able
+to generate an appropriate message.
 
 Internally these are really 2 distinct operations, we first destructure via the
 spec then render in another step.
