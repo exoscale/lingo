@@ -80,6 +80,7 @@ First out of the box, without any custom message added to a spec:
 <img src="example.png" width="80%">
 
 Let's see how it's done under the hood
+
 ```clj
 (exoscale.lingo/explain-data :foo/t-shirts [{:size 5 :color :pink}])
 
@@ -124,8 +125,8 @@ Let's see how it's done under the hood
 ```
 
 As you can see there's a lot of more information available than what spec
-returns alone.  There seem to be repetitions in the data, but that will make
-more sense after it's explained.
+returns alone. There seem to be repetitions in the data, but that will make more
+sense after it's explained.
 
 There are 2 ways to specify custom messages, depending on what is the source you
 start from:
@@ -262,8 +263,6 @@ You can use `(exoscale.lingo/set-explain-printer! ?opts)` to set a default print
 (s/explain string? 1)
 
 ;; 1 is invalid - should be a String
-
-(s/assert string? 1)
 
 ```
 
