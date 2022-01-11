@@ -5,13 +5,19 @@
             [exoscale.lingo.utils :as u]
             [exoscale.lingo.impl :as impl]))
 
-(def registry-ref (atom (merge #:exoscale.lingo.registry.spec{:message {}}
-                               #:exoscale.lingo.registry.pred{:conformers #{}
-                                                              :message {}})))
+(def registry-ref
+  (atom (merge #:exoscale.lingo.registry.spec{:message {}}
+               #:exoscale.lingo.registry.pred{:conformers #{}
+                                              :conformer (impl/make-pred-conformer)
+                                              :message {}})))
 
 (defn set-pred-conformer!
   [k]
-  (swap! registry-ref update :exoscale.lingo.registry.pred/conformers conj k))
+  (swap! registry-ref (fn [registry]
+                        (-> registry
+                            (update :exoscale.lingo.registry.pred/conformers conj k)
+                            (assoc :exoscale.lingo.registry.pred/conformer
+                                   (memoize (impl/make-pred-conformer)))))))
 
 (defn set-pred-message!
   [k f]
@@ -53,11 +59,15 @@
          (assoc pb :in (impl/fix-map-path value (:in pb))))))
 
 (defn x-extend-pred-data
-  [opts]
-  (map (fn [{:keys [pred] :as pb}]
-         (let [pred-data (impl/find-pred-data pred opts)]
+  [{:as _opts :keys [registry]}]
+  (let [registry-val @registry
+        conformers  (:exoscale.lingo.registry.pred/conformers registry-val)
+        conformer (:exoscale.lingo.registry.pred/conformer registry-val)]
+    (map (fn [{:keys [pred] :as pb}]
+         (let [pred (impl/abbrev pred)
+               pred-data (conformer conformers pred)]
            (cond-> pb
-             pred-data (into pred-data))))))
+             pred-data (into pred-data)))))))
 
 (defn x-extend-spec-data
   [opts]
@@ -300,7 +310,7 @@
                                        (str/join ", ")))))
 
 (set-pred-message! :exoscale.lingo.pred/or-pb-group
-                   (fn [{:keys [problems] :as  args} opts]
+                   (fn [{:keys [problems] :as _args} opts]
                      (transduce (comp
                                  (x-extend-message opts)
                                  (map :exoscale.lingo.explain/message)

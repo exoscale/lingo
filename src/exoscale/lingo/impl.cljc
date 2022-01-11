@@ -53,17 +53,18 @@
         (iterate parent-spec)
         (take-while some?))))
 
-(defn find-pred-data
-  [pred {:keys [registry conform] :as _opts}]
-  ;; TODO there are tons of low hanging fruits to make this faster
-  (let [abbreved-pred (abbrev pred)]
-    (reduce (fn [_ k]
-            (when-let [match (conform k abbreved-pred)]
+(defn pred-conformer
+  [conformers pred]
+  (reduce (fn [_ k]
+            (when-let [match (s/conform k pred)]
               (when (not= match :clojure.spec.alpha/invalid)
                 (reduced #:exoscale.lingo.explain.pred{:spec k
                                                        :vals match}))))
           nil
-          (:exoscale.lingo.registry.pred/conformers @registry))))
+          conformers))
+
+(defn make-pred-conformer []
+  (memoize pred-conformer))
 
 (defn find-spec-data
   [spec {:as _opts :keys [registry]}]
