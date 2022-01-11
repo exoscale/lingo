@@ -3,8 +3,28 @@
 > The language and speech, especially the jargon, slang, or argot, of
 > a particular field, group, or individual
 
-Trying to make spec explain message more human readable with small
+Note: it's still an alpha, things are subject to change, so here be dragons.
+
+Trying to make spec explain message more usable with small, composable
 additions.
+
+The goal is to provide the spec users with more data from errors and and gibe
+means to render helpful error messages.
+
+It differs from other similar libraries in that the focus is more on
+(explain-)data first, then leveraging this for potential rendering.  You can use
+lingo without it's error rendering facilities in order to just infer more
+information from your errors, as data.
+
+In some cases it's better to leave the `problems` as a specialized collection
+items and be very detailed per problem, in others you prefer to group things to
+show more compact errors (typically like showing a set of missing keys in a
+map).
+
+Internally building this data is done via transducers that are run against the
+explain-data problems. It's quite easy to pull this appart and build your own if
+want/need to.
+
 
 ## Documentation
 
@@ -24,41 +44,100 @@ Adds 3 functions similar to clojure.spec.alpha/explain-*
 It will take a spec, a value and potentially options and return clojure.spec
 explain-data for it with extra fields added.
 
-For now it extends clojure.spec.alpha/problems with
-`exoscale.lingo/message` and `exoscale.lingo/path`:
+Some very high level:
+
+* `:exoscale.lingo.explain/message` infered error message you might want to display
+* `:exoscale.lingo.explain/path` humanized path
+* `:exoscale.lingo.explain/highlight` potential highlight output (shows error
+  value in context with blanked suroundings)
+
+Keys related to a potential custom error message found at spec level:
+
+* `:exoscale.lingo.explain.spec/spec` which spec had a message registered for it
+* `:exoscale.lingo.explain.spec/message` the message in question
+
+Keys related to a potential error infered from pred data
+* `:exoscale.lingo.explain.pred/spec` the spec used to match the predicate (via conform)
+* `:exoscale.lingo.explain.pred/vals` the values destructured via conformed
+* `:exoscale.lingo.explain.pred/message` the message generated from the values extracted + potential formater registered for this predicate key
+
+So that's quite a lot of information, in most cases you will just care about the
+first three, but the rest is available to you via explain-data if you need/want
+to build your own outputs. If you look at the way `lingo/explain-data` is
+implemented you will also see that all this is very composable you can easily
+enrich/lighten this information.
+
+Ok, now examples:
+
+First out of the box, without any custom message added to a spec:
 
 ```clj
-(s/def :foo/person (keys :req-un [:foo/names]))
-(s/def :foo/names (s/coll-of :foo/name))
-(s/def :foo/name string?)
+(s/def :foo/t-shirts (s/coll-of :foo/t-shirt))
+(s/def :foo/t-shirt (s/keys :req-un [:foo/size :foo/color]))
+(s/def :foo/size (s/int-in 1 3))
+(s/def :foo/color #{:red :blue :green})
 
-(exoscale.lingo/explain-data :foo/person {:names [1 :yolo]})
+(exoscale.lingo/explain :foo/t-shirts [{:size 5 :color :pink}])
+```
+<img src="example.png" width="80%">
+
+Let's see how it's done under the hood
+
+```clj
+(exoscale.lingo/explain-data :foo/t-shirts [{:size 5 :color :pink}])
 
 #:clojure.spec.alpha{:problems
-                     ({:path [:names],
-                       :pred clojure.core/string?,
-                       :val 1,
-                       :via [:foo/person :foo/names :foo/name],
-                       :in [:names 0],
-                       :exoscale.lingo/message "should be a String",
-                       :exoscale.lingo/path "names[0]"}
-                      {:path [:names],
-                       :pred clojure.core/string?,
-                       :val :yolo,
-                       :via [:foo/person :foo/names :foo/name],
-                       :in [:names 1],
-                       :exoscale.lingo/message "should be a String",
-                       :exoscale.lingo/path "names[1]"}),
-                     :spec :foo/person,
-                     :value {:names [1 :yolo]}}
+                     ({:path [:size],
+                       :exoscale.lingo.explain.pred/spec
+                       :exoscale.lingo.pred/int-in-range,
+                       :pred
+                       (clojure.core/fn
+                        [%]
+                        (clojure.spec.alpha/int-in-range? 1 3 %)),
+                       :exoscale.lingo.explain/highlight
+                       "[{:size 5, :color _}]\n        ^ should be an Integer between 1 3",
+                       :via [:foo/t-shirts :foo/t-shirt :foo/size],
+                       :val 5,
+                       :exoscale.lingo.explain.pred/message
+                       "should be an Integer between 1 3",
+                       :exoscale.lingo.explain/message
+                       "should be an Integer between 1 3",
+                       :exoscale.lingo.explain.pred/vals
+                       [:_ {:_ %, :min 1, :max 3}],
+                       :exoscale.lingo.explain/path "[0].size",
+                       :in [0 :size]}
+                      {:path [:color],
+                       :exoscale.lingo.explain.pred/spec
+                       :exoscale.lingo.pred/set,
+                       :pred #{:green :red :blue},
+                       :exoscale.lingo.explain/highlight
+                       "[{:size _, :color :pink}]\n                  ^^^^^ should be one of :blue, :green, :red",
+                       :via [:foo/t-shirts :foo/t-shirt :foo/color],
+                       :val :pink,
+                       :exoscale.lingo.explain.pred/message
+                       "should be one of :blue, :green, :red",
+                       :exoscale.lingo.explain/message
+                       "should be one of :blue, :green, :red",
+                       :exoscale.lingo.explain.pred/vals #{:green :red :blue},
+                       :exoscale.lingo.explain/path "[0].color",
+                       :in [0 :color]}),
+                     :spec :foo/t-shirts,
+                     :value [{:size 5, :color :pink}]}
+
 ```
 
-There are 2 ways to specify custom messages, depending on what is the
-source you start from:
+As you can see there's a lot of more information available than what spec
+returns alone. There seem to be repetitions in the data, but that will make more
+sense after it's explained.
+
+There are 2 ways to specify custom messages, depending on what is the source you
+start from:
 
 If you are working from spec identifiers or static forms you can use
-`set-spec-error!`, it will dispatch on the problem spec, potentially
-resolving aliases too, up to the pred failing at the end:
+`set-spec-error!`, it will dispatch on the problem spec (value we get from
+explain-data `:via`), potentially resolving aliases too, up to the pred failing
+at the end. spec errors will result in addition of
+`:exoscale.lingo.explain.spec/*` keys to the problem data.
 
 ``` clj
 (set-spec-error! `string? "should be a String")
@@ -78,14 +157,17 @@ at ::foo level, lingo will pick up the first message in the alias
 chain (so checks ::foo, then ::bar and then ::baz). Alias information
 is not data available from raw explain-data, lingo has to infer by itself.
 
-If you want to have more precise error handling based on the problem
-pred only (usually it's the best things to do) you can use `set-pred-error!`.
+
+If you want to have more precise error handling based on the problem pred only
+(usually it's the best things to do) you can use `set-pred-error!`. This will
+result in the addition of the `:exoscale.lingo.explain.pred/*` keys to the
+problem.
 
 ``` clj
-(set-pred-error! (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
+(set-pred-error! (s/def ::int-in-range (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
                         :min number?
                         :max number?
-                        :_ #{'%})
+                        :_ #{'%}))
                  (fn [{:keys [min max]} _opts]
                    (format "should be an Integer between %d %d" min max)))
 ```
@@ -93,6 +175,9 @@ pred only (usually it's the best things to do) you can use `set-pred-error!`.
 This will use the first argument to perform conforming against the
 pred in the explain-data problems and use the bound values with second
 argument, a function to generate a precise message.
+
+Internally these are really 2 distinct operations, we first destructure via the
+spec then render in another step.
 
 so for an error like this:
 
@@ -143,9 +228,46 @@ most math comparaison operators and compositions of these with `count`
 for instance, Set/Map membership (or lack thereof), and most of
 clojure.spec custom predicates.
 
+
+`set-pred-error!` calls internally `set-pred-conformer!` and
+`set-pred-message!`, the operations are decoupled. If you only care about the
+destructuring just set a pred conformer for your use and leave the formater out.
+
+You can in theory have a custom error message at both spec level and pred level
+and mix them to create something very detailed, but by default lingo sets
+:exoscale.lingo.explain/message to the value that makes more sense for you (all
+the rest is still available in the explain-data), it will try to get something from the spec explain we generate first, and fallback to the pred message.
+
 The tests demonstrate some of these :
 https://github.com/exoscale/lingo/blob/master/test/exoscale/lingo/test/core_test.cljc
 
+### Options
+
+* `:registry` defaults to lingo's internal registry, but you can have your own, could be handy if you need to support multiple languages for instance
+* `:conform` defaults to `(memoize s/conform)` the function used to destructure predicate forms
+* `:highlight?` defaults to true, whether we should try to provide an highlight of the error value
+* `:highlight-inline-message?` defaults to true, whether we should show the explain message inline with the error marker in the highlight
+* `:colors?` defaults to false, whether to use terminal colors for the highlight
+* `:path?` defaults to true, whether to include a prettified path (js like path vs get-in/associative path)
+* `:message?` defaults to true, whether to include string messages derived from the pred/spec data extracted
+* `:header?` defaults to true, whether to show a header with problems count in `explain` message
+* `:focus?` defaults to true, whether to blank out the values that are not relevant in the error payload
+* `:group-missing-keys?` defaults to true, whether to group all "missing keys" problems for the same map into a single problem.
+* `:group-or-problems?` defaults to true, whether to group all problems concerning the same value into one: typically that's used for nilable, since by default a nilable failure will cause 2 problems and also for s/or clauses (to be able to express "should be a string OR an int" instead of having 2 problems).
+
+### replacing clojure spec printer
+
+You can use `(exoscale.lingo/set-explain-printer! ?opts)` to set a default printer for spec.
+
+```clj
+(lingo/set-explain-printer!)
+
+(s/explain string? 1)
+
+;; 1 is invalid - should be a String
+
+```
+
 ## License
 
-Copyright © 2021 [Exoscale](https://exoscale.com)
+Copyright © 2022 [Exoscale](https://exoscale.com)

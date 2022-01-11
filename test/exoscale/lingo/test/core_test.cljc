@@ -1,8 +1,8 @@
 (ns exoscale.lingo.test.core-test
   (:require [clojure.test :refer [are deftest is]]
             [exoscale.lingo :as l]
-            [exoscale.lingo.utils :as u]
-            ;; [exoscale.specs.string :as xss]
+            [exoscale.lingo.impl :as impl]
+            [exoscale.lingo.highlight :as u]
             [clojure.spec.alpha :as s]))
 
 (defn f2? [_] false)
@@ -27,11 +27,10 @@
 
 (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
 
-(do
-  (println "-------------------------")
-  (l/explain-data ::things 1))
-
-(def ^:dynamic *opts* {})
+(def ^:dynamic *opts* {:highlight? false
+                       :group-missing-keys? false
+                       :group-or-problems? false
+                       :header? false})
 
 (deftest test-outputs
   (are [spec val output] (= (l/explain-str spec val *opts*)
@@ -189,7 +188,6 @@
     {:foo/age 10}
     "#:foo{:age 10} is an invalid :foo/agent - missing key :foo/person\n"
 
-
     (do
       (alter-var-root #'*opts* assoc :hide-keyword-namespaces? true)
       (s/def :foo/agent (s/keys :req [:foo/person :foo/age])))
@@ -234,32 +232,25 @@
 
 (deftest focus-test
   (let [_ '_]
-    (is (= _ (u/focus [3 2 1] nil)))
-    (is (= _ (u/focus 1 [])))
-    (is (= 1 (u/focus 1 [[]])))
-    (is (= _ (u/focus 1 [nil])))
+    (is (= [_ _ _] (u/focus [3 2 1] nil)))
+    (is (= _ (u/focus 1 nil)))
+    (is (= 1 (u/focus 1 [])))
 
-    (is (= [_ _ 1] (u/focus [3 2 1] [[2]])))
-    (is (= [3 _ 1] (u/focus [3 2 1] [[0] [2]])))
+    (is (= [_ _ 1] (u/focus [3 2 1] [2])))
+    (is (= [3 _ _] (u/focus [3 2 1] [0])))
 
-    (is (= {:a 1} (u/focus {:a 1} [[:a]])))
-    (is (= {:a _} (u/focus {:a 1} [[:b]])))
-    (is (= {:a _ :c 1} (u/focus {:a {:b 1} :c 1} [[:c]])))
+    (is (= {:a 1} (u/focus {:a 1} [:a])))
+    (is (= {:a _} (u/focus {:a 1} [:b])))
+    (is (= {:a _ :c 1} (u/focus {:a {:b 1} :c 1} [:c])))
 
-    (is (= {:a {:b [1 {:c {:d #{:b :a}, :e _}}]}}
+    (is (= {:a {:b [_ {:c {:d #{:b :a}, :e _}}]}}
            (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-                    [[:a :b 0]
-                     [:a :b 1 :c :d]]
+                    [:a :b 1 :c :d]
                     {:descend-mismatching-nodes? true})))
 
     (is (= {:a {:b [1 {:c {:d #{_}, :e _}}]}}
            (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-                    [[:a :b 0]]
-                    {:descend-mismatching-nodes? true})))
-
-    (is (= {:a {:b [_ {:c {:d #{_}, :e _}}]}}
-           (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-                    []
+                    [:a :b 0]
                     {:descend-mismatching-nodes? true})))
 
     (is (= {:a {:b [_ {:c {:d #{_}, :e _}}]}}
@@ -269,8 +260,124 @@
 
     (is (= {:a {:b [1 _]}}
            (u/focus {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
-                    [[:a :b 0]])))
+                    [:a :b 0])))
 
     (is (= {:a {:b [_ {:c {:d #{:b :a} :e _}}]}}
            (u/focus {:a {:b [1 {:c {:d #{:b :a} :e {:f 1}}}]}}
-                    [[:a :b 1 :c :d]])))))
+                    [:a :b 1 :c :d])))))
+
+(deftest highlight-test
+  (are [input path output]
+      (= (u/highlight input path {:focus? true})
+         output)
+
+    [3 2 1] {:in [2] :val 1} "[_ _ 1]\n     ^"
+
+    [3 2 1] {:in [0] :val 3} "[3 _ _]\n ^"
+
+    {:a 1} {:in [:a] :val 1} "{:a 1}\n    ^"
+
+    {:a {:b 1} :c 1} {:in [:c] :val 1} "{:a _, :c 1}\n          ^"
+
+    {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+    {:in [:a :b 1 :c :d] :val #{:a :b}}
+    "{:a {:b [_ {:c {:d #{:b :a}, :e _}}]}}\n                   ^^^^^^^^"
+
+    {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+    {:in [:a :b 0] :val 1}
+    "{:a {:b [1 _]}}\n         ^"
+
+    {:a {:b [1 {:c {:d #{:a :b} :e :foo}}]}}
+    {:in [:a :b 0] :val 1}
+    "{:a {:b [1 _]}}\n         ^"
+
+    {:a {:b [1 {:c {:d #{:b :a} :e {:f 1}}}]}}
+    {:in [:a :b 1 :c :d] :val #{:b :a}}
+    "{:a {:b [_ {:c {:d #{:b :a}, :e _}}]}}\n                   ^^^^^^^^"
+
+    ;; single line hl
+    {:a {:bar 255555 :c 3 :d 4 :e 5}}
+    {:in [:a :bar] :val 255555}
+    "{:a {:bar 255555, :c _, :d _, :e _}}\n          ^^^^^^"
+
+    ;; ;; multiline hl output
+    {:aaaaaaaaaaaaa
+     {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
+    {:in [:aaaaaaaaaaaaa :c] :val 33333}
+    "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}")
+  (is (= ["[1]\n ^ should be a string with bla bla bla"]
+         (->> (l/explain-data ::things [1])
+              :clojure.spec.alpha/problems
+              (map :exoscale.lingo.explain/highlight)))))
+
+(deftest test-group-map-keys
+  (is (= "missing keys :age, :person"
+         (-> (l/explain-data :foo/agent2 {} {:group-missing-keys? true})
+             :clojure.spec.alpha/problems
+             first
+             :exoscale.lingo.explain/message)))
+
+  (is (= #{"missing keys :age, :person"
+           "missing keys :names"}
+         (->> (l/explain-data (s/tuple :foo/agent2 :foo/person)
+                              [{} {}]
+                              {:group-missing-keys? true})
+              :clojure.spec.alpha/problems
+              (map :exoscale.lingo.explain/message)
+              set))))
+
+(deftest test-group-or-keys
+  (s/def ::test-group-or-keys (s/nilable string?))
+  (s/def ::test-group-or-keys2 (s/or :str string? :int int?))
+  (is (= #{"should be a String OR should be nil"}
+         (->> (l/explain-data ::test-group-or-keys
+                              1
+                              {:group-or-problems? true
+                               :group-missing-keys? true})
+              :clojure.spec.alpha/problems
+              (map :exoscale.lingo.explain/message)
+              set)))
+  (is (= #{"should be a String OR should be an Integer"}
+         (->> (l/explain-data ::test-group-or-keys2
+                              :kw
+                              {:group-or-problems? true
+                               :group-missing-keys? true})
+              :clojure.spec.alpha/problems
+              (map :exoscale.lingo.explain/message)
+              set)))
+
+  (is (= #{"should be a String OR should be nil"}
+         (->> (l/explain-data (s/coll-of (s/or :_ ::test-group-or-keys
+                                               :_ string?))
+                              ["" 1]
+                              {:group-or-problems? true
+                               :group-missing-keys? true})
+              :clojure.spec.alpha/problems
+              (map :exoscale.lingo.explain/message)
+              set))
+      "ensure there is no duplication of messages in the final pb string")
+
+  (s/def ::test-group-or-keys3 int?)
+  (is (= #{"should be a String OR should be nil"
+           "should be a String OR should be an Integer"
+           "should be an Integer"}
+         (->> (l/explain-data (s/keys :req-un [::test-group-or-keys])
+                              {:test-group-or-keys 1
+                               ::test-group-or-keys2 :boom
+                               ::test-group-or-keys3 ""}
+                              {:group-or-problems? true
+                               :group-missing-keys? true})
+              :clojure.spec.alpha/problems
+              (map :exoscale.lingo.explain/message)
+              set))
+      "grouping does not alter the other problems"))
+
+(deftest fix-map-path-test
+  (is (= [] (impl/fix-map-path [] [])))
+  (is (= [] (impl/fix-map-path {} [])))
+  (is (= [:a] (impl/fix-map-path {:a 1} [:a 1])))
+  (is (= [:a :b :c] (impl/fix-map-path {:a {:b {:c 1}}} [:a 1 :b 1 :c 1])))
+  (is (= [:a :b :c 0] (impl/fix-map-path {:a {:b {:c [1]}}}
+                                         [:a 1 :b 1 :c 1 0])))
+  (is (= [:a :b :c 1 :d]
+         (impl/fix-map-path {:a {:b {:c [{} {:d 1}]}}} [:a 1 :b 1 :c 1 1 :d 1]))))
