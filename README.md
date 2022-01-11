@@ -167,7 +167,7 @@ is not data available from raw explain-data, lingo has to infer by itself.
 
 
 If you want to have more precise error handling based on the problem pred only
-(usually it's the best things to do) you can use `set-pred-error!`. This will
+(usually it's the best thing to do) you can use `set-pred-error!`. This will
 result in the addition of the `:exoscale.lingo.explain.pred/*` keys to the
 problem.
 
@@ -227,7 +227,7 @@ function on it.
 This is a trivial example, but if you take a s/coll-of (or any of
 s/every variants), which can return a myriad of `preds` depending on
 how failure happened, this will return very fine grained error message
-that pin-point exactly how the value failed.
+that pin-points exactly how the value failed.
 This is also very handy for more "custom" other uses cases, such as
 `exoscale.specs/string-of` and other parameterised specs we might have.
 
