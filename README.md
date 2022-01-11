@@ -251,7 +251,6 @@ https://github.com/exoscale/lingo/blob/master/test/exoscale/lingo/test/core_test
 ### Options
 
 * `:registry` defaults to lingo's internal registry, but you can have your own, could be handy if you need to support multiple languages for instance
-* `:conform` defaults to `(memoize s/conform)` the function used to destructure predicate forms
 * `:highlight?` defaults to true, whether we should try to provide an highlight of the error value
 * `:highlight-inline-message?` defaults to true, whether we should show the explain message inline with the error marker in the highlight
 * `:colors?` defaults to false, whether to use terminal colors for the highlight

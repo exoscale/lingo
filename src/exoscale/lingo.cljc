@@ -17,7 +17,7 @@
                         (-> registry
                             (update :exoscale.lingo.registry.pred/conformers conj k)
                             (assoc :exoscale.lingo.registry.pred/conformer
-                                   (memoize (impl/make-pred-conformer)))))))
+                                   (impl/make-pred-conformer))))))
 
 (defn set-pred-message!
   [k f]
@@ -40,7 +40,6 @@
 
 (def default-opts
   {:registry registry-ref
-   :conform (memoize s/conform)
    :header? true
    :focus? true
    :colors? false
