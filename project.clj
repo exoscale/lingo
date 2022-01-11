@@ -1,4 +1,4 @@
-(defproject com.exoscale/lingo "1.0.0-alpha14-SNAPSHOT"
+(defproject com.exoscale/lingo "1.0.0-alpha14"
 
   :description "exoscale spec explain utils"
 
