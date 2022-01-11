@@ -25,6 +25,14 @@ Internally building this data is done via transducers that are run against the
 explain-data problems. It's quite easy to pull this apart and build your own if
 want/need to.
 
+## Installation
+
+lingo is [available on Clojars](https://clojars.org/exoscale/lingo).
+
+Add this to your dependencies:
+
+[![Clojars Project](https://img.shields.io/clojars/v/exoscale/lingo.svg)](https://clojars.org/exoscale/lingo)
+
 
 ## Documentation
 
