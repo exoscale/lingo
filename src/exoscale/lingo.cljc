@@ -1,7 +1,6 @@
 (ns exoscale.lingo
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
-            [exoscale.lingo :as l]
             [exoscale.lingo.highlight :as h]
             [exoscale.lingo.utils :as u]
             [exoscale.lingo.impl :as impl]))
