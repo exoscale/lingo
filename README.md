@@ -14,12 +14,7 @@ means to render helpful error messages.
 It differs from other similar libraries in that the focus is more on
 (explain-)data first, then leveraging that for potential rendering. You can use
 lingo without its error rendering facilities in order to just infer more
-information from your errors, as data.
-
-In some cases it's better to leave the `problems` as a specialised collection
-items and be very detailed per problem, in others you prefer to group things to
-show more compact errors (typically like showing a set of missing keys in a
-map).
+information about your errors.
 
 Internally building this data is done via transducers that are run against the
 explain-data problems. It's quite easy to pull this apart and build your own if
@@ -171,6 +166,8 @@ If you want to have more precise error handling based on the problem pred only
 result in the addition of the `:exoscale.lingo.explain.pred/*` keys to the
 problem.
 
+There is this libary called clojure.spec that's pretty good to parse forms and extract information from them, we happen to use it to do just that:
+
 ``` clj
 (set-pred-error! (s/def ::int-in-range (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
                         :min number?
@@ -257,7 +254,7 @@ https://github.com/exoscale/lingo/blob/master/test/exoscale/lingo/test/core_test
 * `:path?` defaults to true, whether to include a prettified path (js like path vs get-in/associative path)
 * `:message?` defaults to true, whether to include string messages derived from the pred/spec data extracted
 * `:header?` defaults to true, whether to show a header with problems count in `explain` message
-* `:focus?` defaults to true, whether to blank out the values that are not relevant in the error payload
+* `:focus?` defaults to true, whether to blank out the values that are not relevant in the highlight value.
 * `:group-missing-keys?` defaults to true, whether to group all "missing keys" problems for the same map into a single problem.
 * `:group-or-problems?` defaults to true, whether to group all problems concerning the same value into one: typically that's used for nilable, since by default a nilable failure will cause 2 problems and also for s/or clauses (to be able to express "should be a string OR an int" instead of having 2 problems).
 
