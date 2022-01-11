@@ -27,11 +27,11 @@ want/need to.
 
 ## Installation
 
-lingo is [available on Clojars](https://clojars.org/exoscale/lingo).
+lingo is [available on Clojars](https://clojars.org/com.exoscale/lingo).
 
 Add this to your dependencies:
 
-[![Clojars Project](https://img.shields.io/clojars/v/exoscale/lingo.svg)](https://clojars.org/exoscale/lingo)
+[![Clojars Project](https://img.shields.io/clojars/v/com.exoscale/lingo.svg)](https://clojars.org/com.exoscale/lingo)
 
 
 ## Documentation
