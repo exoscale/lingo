@@ -8,21 +8,21 @@ Note: it's still an alpha, things are subject to change, so here be dragons.
 Trying to make spec explain message more usable with small, composable
 additions.
 
-The goal is to provide the spec users with more data from errors and and gibe
+The goal is to provide the spec users with more data from errors and and give
 means to render helpful error messages.
 
 It differs from other similar libraries in that the focus is more on
-(explain-)data first, then leveraging this for potential rendering.  You can use
-lingo without it's error rendering facilities in order to just infer more
+(explain-)data first, then leveraging that for potential rendering. You can use
+lingo without its error rendering facilities in order to just infer more
 information from your errors, as data.
 
-In some cases it's better to leave the `problems` as a specialized collection
+In some cases it's better to leave the `problems` as a specialised collection
 items and be very detailed per problem, in others you prefer to group things to
 show more compact errors (typically like showing a set of missing keys in a
 map).
 
 Internally building this data is done via transducers that are run against the
-explain-data problems. It's quite easy to pull this appart and build your own if
+explain-data problems. It's quite easy to pull this apart and build your own if
 want/need to.
 
 
@@ -34,7 +34,7 @@ Adds 3 functions similar to clojure.spec.alpha/explain-*
   clojure.spec.alpha/explain-data for spec/value with extra fields
 
 * `exoscale.lingo/explain`: uses exoscale.lingo/explain-data but prints
-  a nicely formated message)
+  a nicely formatted message)
 
 * `exoscale.lingo/explain-str`: same as exoscale.lingo/explain but
   returns a string instead of printing
@@ -46,17 +46,17 @@ explain-data for it with extra fields added.
 
 Some very high level:
 
-* `:exoscale.lingo.explain/message` infered error message you might want to display
-* `:exoscale.lingo.explain/path` humanized path
+* `:exoscale.lingo.explain/message` inferred error message you might want to display
+* `:exoscale.lingo.explain/path` humanised path
 * `:exoscale.lingo.explain/highlight` potential highlight output (shows error
-  value in context with blanked suroundings)
+  value in context with blanked surroundings)
 
 Keys related to a potential custom error message found at spec level:
 
 * `:exoscale.lingo.explain.spec/spec` which spec had a message registered for it
 * `:exoscale.lingo.explain.spec/message` the message in question
 
-Keys related to a potential error infered from pred data
+Keys related to a potential error inferred from pred data
 * `:exoscale.lingo.explain.pred/spec` the spec used to match the predicate (via conform)
 * `:exoscale.lingo.explain.pred/vals` the values destructured via conformed
 * `:exoscale.lingo.explain.pred/message` the message generated from the values extracted + potential formater registered for this predicate key
@@ -217,17 +217,15 @@ function on it.
 ```
 
 This is a trivial example, but if you take a s/coll-of (or any of
-s/every variants), which can return a miriad of `preds` depending on
+s/every variants), which can return a myriad of `preds` depending on
 how failure happened, this will return very fine grained error message
 that pin-point exactly how the value failed.
 This is also very handy for more "custom" other uses cases, such as
-`exoscale.specs/string-of` and other paramerized specs we might have.
+`exoscale.specs/string-of` and other parameterised specs we might have.
 
-By default a lot of common predicates are supported out of the box ,
-most math comparaison operators and compositions of these with `count`
-for instance, Set/Map membership (or lack thereof), and most of
-clojure.spec custom predicates.
-
+By default a lot of common predicates are supported out of the box , most common
+math operators and compositions of these with `count` for instance, Set/Map
+membership (or lack thereof), and most of clojure.spec custom predicates.
 
 `set-pred-error!` calls internally `set-pred-conformer!` and
 `set-pred-message!`, the operations are decoupled. If you only care about the
