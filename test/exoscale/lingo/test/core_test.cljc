@@ -268,8 +268,8 @@
 
 (deftest highlight-test
   (are [input path output]
-       (= (u/highlight input path {:focus? true})
-          output)
+      (= (u/highlight input path {:focus? true})
+         output)
 
     [3 2 1] {:in [2] :val 1} "[_ _ 1]\n     ^"
 
@@ -337,15 +337,40 @@
               :clojure.spec.alpha/problems
               (map :exoscale.lingo.explain/message)
               set)))
-    (is (= #{"should be a String OR should be an Integer"}
+  (is (= #{"should be a String OR should be an Integer"}
          (->> (l/explain-data ::test-group-or-keys2
                               :kw
                               {:group-or-problems? true
                                :group-missing-keys? true})
               :clojure.spec.alpha/problems
               (map :exoscale.lingo.explain/message)
-              set))))
+              set)))
 
+  (is (= #{"should be a String OR should be nil"}
+         (->> (l/explain-data (s/coll-of (s/or :_ ::test-group-or-keys
+                                               :_ string?))
+                              ["" 1]
+                              {:group-or-problems? true
+                               :group-missing-keys? true})
+              :clojure.spec.alpha/problems
+              (map :exoscale.lingo.explain/message)
+              set))
+      "ensure there is no duplication of messages in the final pb string")
+
+  (s/def ::test-group-or-keys3 int?)
+  (is (= #{"should be a String OR should be nil"
+           "should be a String OR should be an Integer"
+           "should be an Integer"}
+         (->> (l/explain-data (s/keys :req-un [::test-group-or-keys])
+                              {:test-group-or-keys 1
+                               ::test-group-or-keys2 :boom
+                               ::test-group-or-keys3 ""}
+                              {:group-or-problems? true
+                               :group-missing-keys? true})
+              :clojure.spec.alpha/problems
+              (map :exoscale.lingo.explain/message)
+              set))
+      "grouping does not alter the other problems"))
 
 (deftest fix-map-path-test
   (is (= [] (impl/fix-map-path [] [])))

@@ -305,6 +305,7 @@
                      (transduce (comp
                                  (x-extend-message opts)
                                  (map :exoscale.lingo.explain/message)
+                                 (distinct)
                                  (interpose " OR "))
                                 u/string-builder
                                 problems)))
@@ -391,59 +392,57 @@
                  (fn [[_ {:keys [min max]}] _opts]
                    (impl/format "should be an Integer between %d %d" min max)))
 
-(comment
-  (defn sep
-   []
-   (newline)
-   (println (apply str (repeat 80 "-")))
-   (newline))
+(defn sep
+  []
+  (newline)
+  (println (apply str (repeat 80 "-")))
+  (newline))
 
- (do
-   (s/def :foo/t-shirts (s/coll-of :foo/t-shirt))
-   (s/def :foo/t-shirt (s/keys :req-un [:foo/size :foo/color]))
-   (s/def :foo/size (s/int-in 1 3))
-   (s/def :foo/color #{:red :blue :green})
+(do
+  (s/def :foo/t-shirts (s/coll-of :foo/t-shirt))
+  (s/def :foo/t-shirt (s/keys :req-un [:foo/size :foo/color]))
+  (s/def :foo/size (s/int-in 1 3))
+  (s/def :foo/color #{:red :blue :green})
 
-   (explain :foo/t-shirts [{:size 5 :color :pink}] {:colors? true}) )
+  (explain :foo/t-shirts [{:size 5 :color :pink}] {:colors? true}) )
 
 
- (do
-   (sep)
-   (s/def :foo/a-map (s/keys :req-un [:foo/size :foo/color]))
-   (explain (s/coll-of :foo/a-map) [{}] {:colors? true}))
+(do
+  (sep)
+  (s/def :foo/a-map (s/keys :req-un [:foo/size :foo/color]))
+  (explain (s/coll-of :foo/a-map) [{}] {:colors? true}))
 
- (do
-   (sep)
-   (s/def :foo/a-map (s/keys :req-un [:foo/size :foo/color]))
-   (explain (s/nilable map?) :boom {:colors? true}))
+(do
+  (sep)
+  (s/def :foo/a-map (s/keys :req-un [:foo/size :foo/color]))
+  (explain (s/nilable map?) :boom {:colors? true}))
 
- (do
-   (sep)
-   (s/def ::cnt>1 #(> (count %) 1))
-   (explain ::cnt>1 [] {:colors? true}))
+(do
+  (sep)
+  (s/def ::cnt>1 #(> (count %) 1))
+  (explain ::cnt>1 [] {:colors? true}))
 
- (do
-   (sep)
-   (s/def ::cnt>=1 #(>= (count %) 1))
-   (explain ::cnt>=1 [] {:colors? true}))
+(do
+  (sep)
+  (s/def ::cnt>=1 #(>= (count %) 1))
+  (explain ::cnt>=1 [] {:colors? true}))
 
- (do
-   ()
-   (s/def ::>=1 #(>= % 1))
-   (explain ::>=1 0 {:colors? true}))
+(do
+  ()
+  (s/def ::>=1 #(>= % 1))
+  (explain ::>=1 0 {:colors? true}))
 
- (do
-   (sep)
-   (s/def ::coll-bounds-1 (s/coll-of any? :min-count 3))
-   (explain ::coll-bounds-1 [] {:colors? true}))
+(do
+  (sep)
+  (s/def ::coll-bounds-1 (s/coll-of any? :min-count 3))
+  (explain ::coll-bounds-1 [] {:colors? true}))
 
- (do
-   (sep)
-   (s/def ::coll-bounds-2 (s/coll-of any? :count 3))
-   (explain-data ::coll-bounds-2 [] {:colors? true}))
+(do
+  (sep)
+  (s/def ::coll-bounds-2 (s/coll-of any? :count 3))
+  (explain-data ::coll-bounds-2 [] {:colors? true}))
 
- (do
-   (sep)
-   (s/def ::set #{:a :b :c})
-   (explain (s/coll-of ::set) [:d] {:colors? true}))
- )
+(do
+  (sep)
+  (s/def ::set #{:a :b :c})
+  (explain (s/coll-of ::set) [:d] {:colors? true}))
