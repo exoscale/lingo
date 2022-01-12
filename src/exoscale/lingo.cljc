@@ -111,26 +111,26 @@
   (update explain-data
           :clojure.spec.alpha/problems
           (fn [pbs]
-            (-> (sequence (comp
-                           (if message? (x-extend-message opts) identity)
-                           (if path? (x-extend-path opts) identity)
-                           (if highlight? (x-highlight value opts) identity))
-                          ;; the stuff we will always do first, fixing spec bugs,
-                          ;; extending with our spec/pred data. We need to do this
-                          ;; first because of grouping, this way we can avoid to do
-                          ;; useless work that would be squashed by a potential
-                          ;; merge of problems
-                          (cond->> (eduction (x-fix-spec-quirks value)
-                                             (x-extend-spec-data opts)
-                                             (x-extend-pred-data opts)
-                                             pbs)
-                            group-missing-keys?
-                            impl/group-missing-keys
+            (sequence (comp
+                       (if message? (x-extend-message opts) identity)
+                       (if path? (x-extend-path opts) identity)
+                       (if highlight? (x-highlight value opts) identity))
+                      ;; the stuff we will always do first, fixing spec bugs,
+                      ;; extending with our spec/pred data. We need to do this
+                      ;; first because of grouping, this way we can avoid to do
+                      ;; useless work that would be squashed by a potential
+                      ;; merge of problems
+                      (cond->> (eduction (x-fix-spec-quirks value)
+                                         (x-extend-spec-data opts)
+                                         (x-extend-pred-data opts)
+                                         pbs)
+                        group-missing-keys?
+                        impl/group-missing-keys
 
-                            group-or-problems?
-                            impl/group-or-problems
+                        group-or-problems?
+                        impl/group-or-problems
 
-                            :then (sort-by #(- (count (:path %))))))))))
+                        :then (sort-by #(- (count (:path %)))))))))
 
 (defn explain-data
   ([spec value]

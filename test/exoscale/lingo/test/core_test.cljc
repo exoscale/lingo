@@ -200,9 +200,7 @@
     {:age 10 :person {:names [1]}}
     "1 in `person.names[0]` is an invalid :foo/name - should be a String\n"
 
-    (-> (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age]))
-        ;; (xs/with-meta! {:exoscale.lingo/name "Agent"})
-        )
+    (s/def :foo/agent2 (s/keys :req-un [:foo/person :foo/age])) ;; (xs/with-meta! {:exoscale.lingo/name "Agent"})
     {:age ""}
     "\"\" in `age` is an invalid :foo/age - should be an Integer\n{:age \"\"} is an invalid :foo/agent2 - missing key :person\n"
 
