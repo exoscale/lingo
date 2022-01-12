@@ -12,5 +12,5 @@
    :cyan "\u001b[36;1m"
    :reset "\u001b[0m"})
 
-(defn color [s color]
-  (str (color colors) s (:reset colors)))
+(defn color [s color']
+  (str (get colors color') s (:reset colors)))
