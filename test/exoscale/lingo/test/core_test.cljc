@@ -303,7 +303,7 @@
      {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
     {:in [:aaaaaaaaaaaaa :c] :val 33333}
     "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}")
-  (is (= ["[1]\n ^ should be a string with bla bla bla"]
+  (is (= ["[1]\n ^\n should be a string with bla bla bla"]
          (->> (l/explain-data ::things [1])
               :clojure.spec.alpha/problems
               (map :exoscale.lingo.explain/highlight)))))

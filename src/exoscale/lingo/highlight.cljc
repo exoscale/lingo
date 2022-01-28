@@ -109,6 +109,12 @@
                         (not focus?)
                         (assoc :mismatch-fn identity)))))
 
+(defn colorize
+  [s color]
+  (cond-> s
+   (keyword? color)
+   (u/color color)))
+
 (defn highlight
   [value
    {:as _pb
@@ -116,27 +122,31 @@
     :exoscale.lingo.explain/keys [message]
     :or {message (str "Does not conform to " pred)}}
    {:as opts :keys [colors? highlight-inline-message?]}]
-  (->> (prep-val value in opts)
-       str/split-lines
-       (transduce (comp
-                   (map (fn [line]
-                          ;; if line contains relevant value, add placholder
-                          ;; with rendered error
-                          (if-let [idx (relevant-mark-index line)]
-                            (let [s (pp-str val)]
-                              (str (replace-mark line
-                                                 (cond-> s
-                                                   colors?
-                                                   (u/color :red))
-                                                 idx)
-                                   \newline
-                                   (cond-> (str (marker idx (width s)))
+  (let [error-color (when colors? :red)]
+    (->> (prep-val value in opts)
+          str/split-lines
+          (transduce (comp
+                      (map (fn [line]
+                             ;; if line contains relevant value, add placholder
+                             ;; with rendered error
+                             (if-let [idx (relevant-mark-index line)]
+                               (let [s (pp-str val)]
+                                 (str (replace-mark line
+                                                    (cond-> s
+                                                      colors?
+                                                      (u/color :red))
+                                                    idx)
+                                      \newline
+                                      (cond-> (-> (str (marker idx (width s)))
+                                                  (colorize error-color))
 
-                                     highlight-inline-message?
-                                     (str " " message)
+                                        highlight-inline-message?
+                                        (str \newline
+                                             (pad idx)
+                                             (colorize message error-color))
 
-                                     colors?
-                                     (u/color :red))))
-                            line)))
-                   (interpose \newline))
-                  u/string-builder)))
+                                        colors?
+                                        (u/color :red))))
+                               line)))
+                      (interpose \newline))
+                     u/string-builder))))
