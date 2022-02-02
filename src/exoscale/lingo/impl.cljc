@@ -183,3 +183,10 @@
                 path)
         second)
     path))
+
+
+;; rendering
+
+(defn stringify-keyword
+  [k]
+  (format "'%s'" (name k)))

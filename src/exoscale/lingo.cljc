@@ -47,6 +47,8 @@
    :message? true
    :highlight? true
    :highlight-inline-message? true
+   :hide-keyword-namespaces? false
+   :stringify-keyword? false
    :group-missing-keys? true
    :group-or-problems? true})
 
@@ -297,7 +299,9 @@
                    (impl/format "missing key %s"
                                 (cond-> key
                                   (:hide-keyword-namespaces? opts)
-                                  (-> name keyword)))))
+                                  (-> name keyword)
+                                  (:stringify-keyword? opts)
+                                  impl/stringify-keyword))))
 
 (set-pred-message! :exoscale.lingo.pred/contains-keys
                    (fn [{:keys [keys]} opts]
@@ -305,7 +309,10 @@
                                   (->> keys
                                        (map #(cond-> %
                                                (:hide-keyword-namespaces? opts)
-                                               (-> name keyword)))
+                                               (-> name keyword)
+
+                                               (:stringify-keyword? opts)
+                                               impl/stringify-keyword))
                                        (str/join ", ")))))
 
 (set-pred-message! :exoscale.lingo.pred/or-pb-group
