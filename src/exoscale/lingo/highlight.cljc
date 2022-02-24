@@ -36,11 +36,12 @@
      (mismatch-fn m)
 
      (map? m)
-     (into (empty m)
+     (into {}
            (map (fn [[k v]]
                   [k
                    (focus v path opts (conj current-path k))]))
            m)
+
      (coll? m)
      (into (empty m)
            (map-indexed (fn [idx x]
