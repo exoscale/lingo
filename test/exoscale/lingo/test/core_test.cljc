@@ -208,6 +208,10 @@
     1
     "1 is an invalid :foo/animal - should be one of :a, :b, :c\n"
 
+    (s/def :foo/animal #{:a :b "c"})
+    1
+    "1 is an invalid :foo/animal - should be one of :a, :b, c\n"
+
     :foo/person
     {:names [1 :yolo]}
     "1 in `names[0]` is an invalid :foo/name - should be a String\n:yolo in `names[1]` is an invalid :foo/name - should be a String\n"

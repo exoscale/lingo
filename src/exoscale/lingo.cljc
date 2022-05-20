@@ -289,7 +289,7 @@
 
 (set-pred-error! (s/def :exoscale.lingo.pred/set set?)
                  (fn [st _opts]
-                   (impl/format "should be one of %s" (str/join ", " (sort st)))))
+                   (impl/format "should be one of %s" (str/join ", " (sort (map str st))))))
 
 (set-pred-error! (s/def :exoscale.lingo.pred/contains-key
                    (s/cat :pred #{'contains?}
