@@ -64,7 +64,7 @@
           conformers))
 
 (defn make-pred-conformer []
-  (identity pred-conformer))
+  (memoize pred-conformer))
 
 (defn find-spec-data
   [spec {:as _opts :keys [registry]}]
