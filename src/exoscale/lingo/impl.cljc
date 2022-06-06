@@ -184,7 +184,6 @@
         second)
     path))
 
-
 ;; rendering
 
 (defn stringify-keyword

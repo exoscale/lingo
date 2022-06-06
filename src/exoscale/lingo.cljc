@@ -64,9 +64,17 @@
   (let [registry-val @registry
         conformers (:exoscale.lingo.registry.pred/conformers registry-val)
         conformer (:exoscale.lingo.registry.pred/conformer registry-val)]
-    (map (fn [{:keys [pred] :as pb}]
+    (map (fn [{:keys [pred reason] :as pb}]
            (let [pred (impl/abbrev pred)
-                 pred-data (conformer conformers pred)]
+                 ;; try to match a raw pred first, if we detect it's a
+                 ;; multi-method dispatch failure try to match on one with that
+                 ;; fn
+                 pred-data (conformer conformers pred)
+                 pred-data (if (and (= reason "no method")
+                                    (not (= :exoscale.lingo.pred/symbol
+                                            (:exoscale.lingo.explain.pred/val pred-data))))
+                             (conformer conformers `(exoscale.lingo.pred/no-method ~pred))
+                             pred-data)]
              (cond-> pb
                pred-data (into pred-data)))))))
 
@@ -406,6 +414,12 @@
                                    :max number?)))
                  (fn [[_ {:keys [min max]}] _opts]
                    (impl/format "should be an Integer between %d %d" min max)))
+
+(set-pred-error! (s/def :exoscale.lingo.pred/no-method
+                   (s/cat :_ #{'exoscale.lingo.pred/no-method}
+                          :method ident?))
+                 (fn [{:keys [method]} _opts]
+                   (impl/format "should allow dispatch on %s" method)))
 
 (comment
   (defn sep
