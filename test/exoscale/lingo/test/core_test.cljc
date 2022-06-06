@@ -270,8 +270,8 @@
 
 (deftest highlight-test
   (are [input path output]
-      (= (u/highlight input path {:focus? true})
-         output)
+       (= (u/highlight input path {:focus? true})
+          output)
 
     [3 2 1] {:in [2] :val 1} "[_ _ 1]\n     ^"
 
@@ -383,3 +383,44 @@
                                          [:a 1 :b 1 :c 1 0])))
   (is (= [:a :b :c 1 :d]
          (impl/fix-map-path {:a {:b {:c [{} {:d 1}]}}} [:a 1 :b 1 :c 1 1 :d 1]))))
+
+(deftest multi-spec-test
+  ;; example from guide
+  (s/def :event/type keyword?)
+  (s/def :event/timestamp int?)
+  (s/def :search/url string?)
+  (s/def :error/message string?)
+  (s/def :error/code int?)
+
+  (defmulti event-type :event/type)
+  (defmethod event-type :event/search [_]
+    (s/keys :req [:event/type :event/timestamp :search/url]))
+  (defmethod event-type :event/error [_]
+    (s/keys :req [:event/type :event/timestamp :error/message :error/code]))
+
+  (s/def :event/event (s/multi-spec event-type :event/type))
+
+  (is (= (l/explain-data
+          :event/event
+          {:event/type :yolo})
+         #:clojure.spec.alpha{:problems
+                              '({:path [:yolo],
+                                 :exoscale.lingo.explain.pred/spec
+                                 :exoscale.lingo.pred/no-method,
+                                 :pred exoscale.lingo.test.core-test/event-type,
+                                 :via [:event/event],
+                                 :val #:event{:type :yolo},
+                                 :exoscale.lingo.explain.pred/message
+                                 "should allow dispatch on exoscale.lingo.test.core-test/event-type",
+                                 :reason "no method",
+                                 :exoscale.lingo.explain/message
+                                 "should allow dispatch on exoscale.lingo.test.core-test/event-type",
+                                 :exoscale.lingo.explain.pred/vals
+                                 {:_ exoscale.lingo.pred/no-method,
+                                  :method exoscale.lingo.test.core-test/event-type},
+                                 :in []}),
+                              :spec :event/event,
+                              :value #:event{:type :yolo}}
+         (l/explain-data
+          :event/event
+          {:event/type :yolo}))))

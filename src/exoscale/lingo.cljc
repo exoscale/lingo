@@ -64,9 +64,17 @@
   (let [registry-val @registry
         conformers (:exoscale.lingo.registry.pred/conformers registry-val)
         conformer (:exoscale.lingo.registry.pred/conformer registry-val)]
-    (map (fn [{:keys [pred] :as pb}]
+    (map (fn [{:keys [pred reason] :as pb}]
            (let [pred (impl/abbrev pred)
-                 pred-data (conformer conformers pred)]
+                 ;; try to match a raw pred first, if we detect it's a
+                 ;; multi-method dispatch failure try to match on one with that
+                 ;; fn
+                 pred-data (conformer conformers pred)
+                 pred-data (if (and (= reason "no method")
+                                    (not (= :exoscale.lingo.pred/symbol
+                                            (:exoscale.lingo.explain.pred/val pred-data))))
+                             (conformer conformers `(exoscale.lingo.pred/no-method ~pred))
+                             pred-data)]
              (cond-> pb
                pred-data (into pred-data)))))))
 
@@ -407,6 +415,12 @@
                  (fn [[_ {:keys [min max]}] _opts]
                    (impl/format "should be an Integer between %d %d" min max)))
 
+(set-pred-error! (s/def :exoscale.lingo.pred/no-method
+                   (s/cat :_ #{'exoscale.lingo.pred/no-method}
+                          :method ident?))
+                 (fn [{:keys [method]} _opts]
+                   (impl/format "should allow dispatch on %s" method)))
+
 (comment
   (defn sep
     []
@@ -461,3 +475,40 @@
     (sep)
     (s/def ::set #{:a :b :c})
     (explain (s/coll-of ::set) [:d] {:colors? true})))
+
+(s/def :event/type keyword?)
+(s/def :event/timestamp int?)
+(s/def :search/url string?)
+(s/def :error/message string?)
+(s/def :error/code int?)
+
+(defmulti event-type :event/type)
+(defmethod event-type :event/search [_]
+  (s/keys :req [:event/type :event/timestamp :search/url]))
+(defmethod event-type :event/error [_]
+  (s/keys :req [:event/type :event/timestamp :error/message :error/code]))
+
+(s/def :event/event (s/multi-spec event-type :event/type))
+
+;; (explain-data
+;;  (s/or :s string? :e :event/event)
+;;  {:event/type :yolo})
+
+(explain-data
+ (s/or :s string? :e :event/event)
+ {:event/type :yolo})
+
+;; (explain
+;;  :event/event
+;;  {:event/type :yolo})
+
+;; (explain-data
+;;  :event/event
+;;  {:event/type :yolo})
+
+#_(explain-data
+   :event/event
+   {:event/type :event/search
+    :search/url 200})
+
+
