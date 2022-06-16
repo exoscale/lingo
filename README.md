@@ -3,8 +3,6 @@
 > The language and speech, especially the jargon, slang, or argot, of
 > a particular field, group, or individual
 
-Note: it's still an alpha, things are subject to change, so here be dragons.
-
 Trying to make spec explain message more usable with small, composable
 additions.
 
