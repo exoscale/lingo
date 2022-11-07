@@ -291,7 +291,9 @@
 (set-pred-error! (s/def :exoscale.lingo.pred/symbol symbol?)
                  (fn [sym {:as _opts :keys [registry]}]
                    (impl/spec-error-message (if (simple-symbol? sym)
-                                              (symbol "clojure.core" (name sym))
+                                              (symbol #?(:clj "clojure.core"
+                                                         :cljs "cljs.core")
+                                                      (name sym))
                                               sym)
                                             @registry)))
 
