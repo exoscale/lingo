@@ -1,9 +1,16 @@
-(ns exoscale.lingo.utils)
+(ns exoscale.lingo.utils
+  #?(:cljs (:import (google.string StringBuffer))))
 
-(defn string-builder
-  ([] (StringBuilder.))
-  ([^StringBuilder sb x] (.append sb x))
-  ([^StringBuilder sb] (.toString sb)))
+#?:(:clj
+    (defn string-builder
+      ([] (StringBuilder.))
+      ([^StringBuilder sb x] (.append sb x))
+      ([^StringBuilder sb] (.toString sb)))
+    :cljs
+    (defn string-builder
+      ([] (StringBuffer.))
+      ([sb x] (.append sb x))
+      ([sb] (.toString sb))))
 
 (def colors
   {:red "\u001b[31m"
