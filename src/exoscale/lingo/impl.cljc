@@ -17,7 +17,8 @@
 (defn strip-core
   [sym]
   (cond-> sym
-    (= (namespace sym) "clojure.core")
+    (= (namespace sym) #?(:clj "clojure.core"
+                          :cljs "cljs.core"))
     (-> name symbol)))
 
 (defn abbrev [form]
@@ -57,7 +58,8 @@
   [conformers pred]
   (reduce (fn [_ k]
             (when-let [match (s/conform k pred)]
-              (when (not= match :clojure.spec.alpha/invalid)
+              (when (not= match #?(:clj :clojure.spec.alpha/invalid
+                                   :cljs :cljs.spec.alpha/invalid))
                 (reduced #:exoscale.lingo.explain.pred{:spec k
                                                        :vals match}))))
           nil

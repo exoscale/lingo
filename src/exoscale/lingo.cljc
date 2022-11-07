@@ -115,11 +115,12 @@
                   (h/highlight val pb opts))))))
 
 (defn explain-data*
-  [{:as explain-data :clojure.spec.alpha/keys [value]}
+  [{:as explain-data
+    #?(:clj :clojure.spec.alpha/keys :cljs :cljs.spec.alpha/keys) [value]}
    {:as opts :keys [highlight? group-missing-keys? group-or-problems?
                     path? message?]}]
   (update explain-data
-          :clojure.spec.alpha/problems
+          #?(:clj :clojure.spec.alpha/problems :cljs :cljs.spec.alpha/problems)
           (fn [pbs]
             (sequence (comp
                        (if message? (x-extend-message opts) identity)
@@ -152,7 +153,7 @@
 (defn explain-printer
   "Like spec explain, but uses lingo printer"
   ([ed] (explain-printer ed nil))
-  ([{:as _ed :clojure.spec.alpha/keys [problems]}
+  ([{:as _ed #?(:clj :clojure.spec.alpha/keys :cljs :cljs.spec.alpha/keys) [problems]}
     {:as _opts :keys [colors? highlight? header?]}]
    (if (seq problems)
      (do
@@ -406,7 +407,8 @@
                                 x)))
 
 (set-pred-error! (s/def :exoscale.lingo.pred/int-in-range
-                   (s/or :_ (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
+                   (s/or :_ (s/cat :_ #{#?(:clj 'clojure.spec.alpha/int-in-range?
+                                           :cljs 'cljs.spec.alpha/int-in-range?)}
                                    :min number?
                                    :max number?
                                    :_ simple-symbol?)
