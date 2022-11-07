@@ -218,8 +218,7 @@
   "Sets explain printer globally for all specs"
   ([] (set-explain-printer! nil))
   ([opts]
-   (set! #?(:clj :clojure.spec.alpha/*explain-out*
-            :cljs :cljs.spec.alpha/*explain-out*)
+   (set! clojure.spec.alpha/*explain-out*
          (let [opts (into default-opts opts)]
            (fn [ed]
              (explain-printer (explain-data* ed opts)
