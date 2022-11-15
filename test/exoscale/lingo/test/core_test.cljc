@@ -32,9 +32,11 @@
                        :group-or-problems? false
                        :header? false})
 
+(def problems #?(:clj :clojure.spec.alpha/problems
+                 :cljs :cljs.spec.alpha/problems))
+
 (deftest test-outputs
-  (are [spec val output] (= (l/explain-str spec val *opts*)
-                            output)
+  (are [spec val expected] (= expected (l/explain-str spec val *opts*))
 
     ::thing
     1
@@ -145,8 +147,8 @@
     "-1 is invalid - should be an Integer between 0 10\n"
 
     (s/double-in :min 0 :max 10)
-    (double 11)
-    "11.0 is invalid - should be at most 10\n"
+    (double 11.1)
+    "11.1 is invalid - should be at most 10\n"
 
     (s/coll-of any? :min-count 3)
     [1]
@@ -309,13 +311,13 @@
     "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}")
   (is (= ["[1]\n ^\n should be a string with bla bla bla"]
          (->> (l/explain-data ::things [1])
-              :clojure.spec.alpha/problems
+              (problems)
               (map :exoscale.lingo.explain/highlight)))))
 
 (deftest test-group-map-keys
   (is (= "missing keys :age, :person"
          (-> (l/explain-data :foo/agent2 {} {:group-missing-keys? true})
-             :clojure.spec.alpha/problems
+             (problems)
              first
              :exoscale.lingo.explain/message)))
 
@@ -324,7 +326,7 @@
          (->> (l/explain-data (s/tuple :foo/agent2 :foo/person)
                               [{} {}]
                               {:group-missing-keys? true})
-              :clojure.spec.alpha/problems
+              (problems)
               (map :exoscale.lingo.explain/message)
               set))))
 
@@ -336,7 +338,7 @@
                               1
                               {:group-or-problems? true
                                :group-missing-keys? true})
-              :clojure.spec.alpha/problems
+              (problems)
               (map :exoscale.lingo.explain/message)
               set)))
   (is (= #{"should be a String OR should be an Integer"}
@@ -344,7 +346,7 @@
                               :kw
                               {:group-or-problems? true
                                :group-missing-keys? true})
-              :clojure.spec.alpha/problems
+              (problems)
               (map :exoscale.lingo.explain/message)
               set)))
 
@@ -354,7 +356,7 @@
                               ["" 1]
                               {:group-or-problems? true
                                :group-missing-keys? true})
-              :clojure.spec.alpha/problems
+              (problems)
               (map :exoscale.lingo.explain/message)
               set))
       "ensure there is no duplication of messages in the final pb string")
@@ -369,7 +371,7 @@
                                ::test-group-or-keys3 ""}
                               {:group-or-problems? true
                                :group-missing-keys? true})
-              :clojure.spec.alpha/problems
+              (problems)
               (map :exoscale.lingo.explain/message)
               set))
       "grouping does not alter the other problems"))

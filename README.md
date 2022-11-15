@@ -6,17 +6,17 @@
 Trying to make spec explain message more usable with small, composable
 additions.
 
-The goal is to provide the spec users with more data from errors and and give
+The goal is to provide spec users with more data from errors and give
 means to render helpful error messages.
 
 It differs from other similar libraries in that the focus is more on
-(explain-)data first, then leveraging that for potential rendering. You can use
+(explain-)data first, than leveraging that for potential rendering. You can use
 lingo without its error rendering facilities in order to just infer more
 information about your errors.
 
 Internally building this data is done via transducers that are run against the
 explain-data problems. It's quite easy to pull this apart and build your own if
-want/need to.
+you want/need to.
 
 ## Installation
 
