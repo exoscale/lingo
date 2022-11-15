@@ -140,11 +140,11 @@
 
     (s/int-in 0 10)
     -1
-    "-1 is invalid - should be an Integer between 0 10\n"
+    "-1 is invalid - should be an Integer between 0 and 10\n"
 
     (s/and number? #(<= 0 % 10))
     -1
-    "-1 is invalid - should be an Integer between 0 10\n"
+    "-1 is invalid - should be an Integer between 0 and 10\n"
 
     (s/double-in :min 0 :max 10)
     (double 11.1)
@@ -156,11 +156,11 @@
 
     (s/coll-of any? :max-count 3)
     [1 1 1 1]
-    "[1 1 1 1] is invalid - should contain between 0 3 elements\n"
+    "[1 1 1 1] is invalid - should contain between 0 and 3 elements\n"
 
     (s/coll-of any? :max-count 3 :min-count 1)
     [1 1 1 1]
-    "[1 1 1 1] is invalid - should contain between 1 3 elements\n"
+    "[1 1 1 1] is invalid - should contain between 1 and 3 elements\n"
 
     (s/coll-of any? :count 3)
     [1 1 1 1]

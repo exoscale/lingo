@@ -362,7 +362,7 @@
                           :_cnt ::count+arg
                           :max number?))
                  (fn [{:keys [min max]} _opts]
-                   (impl/format "should contain between %s %s elements"
+                   (impl/format "should contain between %s and %s elements"
                                 min max)))
 
 (set-pred-error! (s/def :exoscale.lingo.pred/compare-count
@@ -417,7 +417,7 @@
                                    :_ simple-symbol?
                                    :max number?)))
                  (fn [[_ {:keys [min max]}] _opts]
-                   (impl/format "should be an Integer between %d %d" min max)))
+                   (impl/format "should be an Integer between %d and %d" min max)))
 
 (set-pred-error! (s/def :exoscale.lingo.pred/no-method
                    (s/cat :_ #{'exoscale.lingo.pred/no-method}
