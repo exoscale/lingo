@@ -314,21 +314,22 @@
               (problems)
               (map :exoscale.lingo.explain/highlight)))))
 
-(deftest test-group-map-keys
-  (is (= "missing keys :age, :person"
-         (-> (l/explain-data :foo/agent2 {} {:group-missing-keys? true})
-             (problems)
-             first
-             :exoscale.lingo.explain/message)))
+#?(:clj
+   (deftest test-group-map-keys
+     (is (= "missing keys :age, :person"
+            (-> (l/explain-data :foo/agent2 {} {:group-missing-keys? true})
+                (problems)
+                first
+                :exoscale.lingo.explain/message)))
 
-  (is (= #{"missing keys :age, :person"
-           "missing keys :names"}
-         (->> (l/explain-data (s/tuple :foo/agent2 :foo/person)
-                              [{} {}]
-                              {:group-missing-keys? true})
-              (problems)
-              (map :exoscale.lingo.explain/message)
-              set))))
+     (is (= #{"missing keys :age, :person"
+              "missing keys :names"}
+            (->> (l/explain-data (s/tuple :foo/agent2 :foo/person)
+                                 [{} {}]
+                                 {:group-missing-keys? true})
+                 (problems)
+                 (map :exoscale.lingo.explain/message)
+                 set)))))
 
 (deftest test-group-or-keys
   (s/def ::test-group-or-keys (s/nilable string?))
