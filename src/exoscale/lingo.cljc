@@ -342,7 +342,8 @@
                    (s/cat :_op #{'<=}
                           :min number?
                           :_cnt ::count+arg
-                          :_max #{'Integer/MAX_VALUE}))
+                          :_max #?(:clj #{'Integer/MAX_VALUE}
+                                   :cljs #{js/Number.MAX_SAFE_INTEGER})))
                  (fn [{:keys [min]} _opts]
                    (impl/format "should contain at least %s elements"
                                 min)))
@@ -360,7 +361,8 @@
                    (s/cat :_op #{'<=}
                           :min number?
                           :_cnt ::count+arg
-                          :max number?))
+                          :max #(and (number? %)
+                                     (< % 9007199254740991)))) ;;js/Number.MAX_SAFE_INTEGER
                  (fn [{:keys [min max]} _opts]
                    (impl/format "should contain between %s and %s elements"
                                 min max)))
