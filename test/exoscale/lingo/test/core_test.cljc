@@ -186,16 +186,16 @@
     {:age 10}
     "{:age 10} is an invalid :foo/agent - missing key :person\n"
 
-    (s/def :foo/agent (s/keys :req [:foo/person :foo/age]))
-    {:foo/age 10}
-    "#:foo{:age 10} is an invalid :foo/agent - missing key :foo/person\n"
+    #?@(:clj
+        ((s/def :foo/agent (s/keys :req [:foo/person :foo/age]))
+         {:foo/age 10}
+         "#:foo{:age 10} is an invalid :foo/agent - missing key :foo/person\n"
 
-    (do
-      #?(:clj (alter-var-root #'*opts* assoc :hide-keyword-namespaces? true)
-         :cljs (set! *opts* (assoc *opts* :hide-keyword-namespaces? true)))
-      (s/def :foo/agent (s/keys :req [:foo/person :foo/age])))
-    {:foo/age 10}
-    "#:foo{:age 10} is an invalid :foo/agent - missing key :person\n"
+         (do
+           (alter-var-root #'*opts* assoc :hide-keyword-namespaces? true)
+           (s/def :foo/agent (s/keys :req [:foo/person :foo/age])))
+         {:foo/age 10}
+         "#:foo{:age 10} is an invalid :foo/agent - missing key :person\n"))
 
     (do
       #?(:clj (alter-var-root #'*opts* dissoc :hide-keyword-namespaces?)
@@ -306,10 +306,11 @@
     "{:a {:bar 255555, :c _, :d _, :e _}}\n          ^^^^^^"
 
     ;; multiline hl output
-    {:aaaaaaaaaaaaa
-     {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
-    {:in [:aaaaaaaaaaaaa :c] :val 33333}
-    "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}")
+    #?@(:clj
+        ({:aaaaaaaaaaaaa
+          {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
+         {:in [:aaaaaaaaaaaaa :c] :val 33333}
+         "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}")))
   (is (= ["[1]\n ^\n should be a string with bla bla bla"]
          (->> (l/explain-data ::things [1])
               (problems)
