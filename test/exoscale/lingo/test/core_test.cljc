@@ -405,24 +405,44 @@
   (is (= (l/explain-data
           :event/event
           {:event/type :yolo})
-         #:clojure.spec.alpha{:problems
-                              '({:path [:yolo],
-                                 :exoscale.lingo.explain.pred/spec
-                                 :exoscale.lingo.pred/no-method,
-                                 :pred exoscale.lingo.test.core-test/event-type,
-                                 :via [:event/event],
-                                 :val #:event{:type :yolo},
-                                 :exoscale.lingo.explain.pred/message
-                                 "should allow dispatch on exoscale.lingo.test.core-test/event-type",
-                                 :reason "no method",
-                                 :exoscale.lingo.explain/message
-                                 "should allow dispatch on exoscale.lingo.test.core-test/event-type",
-                                 :exoscale.lingo.explain.pred/vals
-                                 {:_ exoscale.lingo.pred/no-method,
-                                  :method exoscale.lingo.test.core-test/event-type},
-                                 :in []}),
-                              :spec :event/event,
-                              :value #:event{:type :yolo}}
+         #?(:clj
+            #:clojure.spec.alpha{:problems
+                                 '({:path [:yolo],
+                                    :exoscale.lingo.explain.pred/spec
+                                    :exoscale.lingo.pred/no-method,
+                                    :pred exoscale.lingo.test.core-test/event-type,
+                                    :via [:event/event],
+                                    :val #:event{:type :yolo},
+                                    :exoscale.lingo.explain.pred/message
+                                    "should allow dispatch on exoscale.lingo.test.core-test/event-type",
+                                    :reason "no method",
+                                    :exoscale.lingo.explain/message
+                                    "should allow dispatch on exoscale.lingo.test.core-test/event-type",
+                                    :exoscale.lingo.explain.pred/vals
+                                    {:_ exoscale.lingo.pred/no-method,
+                                     :method exoscale.lingo.test.core-test/event-type},
+                                    :in []}),
+                                 :spec :event/event,
+                                 :value #:event{:type :yolo}}
+            :cljs
+            #:cljs.spec.alpha {:problems
+                               '({:path [:yolo],
+                                  :exoscale.lingo.explain.pred/spec
+                                  :exoscale.lingo.pred/no-method,
+                                  :pred exoscale.lingo.test.core-test/event-type,
+                                  :via [:event/event],
+                                  :val #:event{:type :yolo},
+                                  :exoscale.lingo.explain.pred/message
+                                  "should allow dispatch on exoscale.lingo.test.core-test/event-type",
+                                  :reason "no method",
+                                  :exoscale.lingo.explain/message
+                                  "should allow dispatch on exoscale.lingo.test.core-test/event-type",
+                                  :exoscale.lingo.explain.pred/vals
+                                  {:_ exoscale.lingo.pred/no-method,
+                                   :method exoscale.lingo.test.core-test/event-type},
+                                  :in []}),
+                               :spec :event/event,
+                               :value #:event{:type :yolo}})
          (l/explain-data
           :event/event
           {:event/type :yolo}))))
