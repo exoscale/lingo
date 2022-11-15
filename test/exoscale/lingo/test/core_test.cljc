@@ -191,13 +191,15 @@
     "#:foo{:age 10} is an invalid :foo/agent - missing key :foo/person\n"
 
     (do
-      (alter-var-root #'*opts* assoc :hide-keyword-namespaces? true)
+      #?(:clj (alter-var-root #'*opts* assoc :hide-keyword-namespaces? true)
+         :cljs (set! *opts* (assoc *opts* :hide-keyword-namespaces? true)))
       (s/def :foo/agent (s/keys :req [:foo/person :foo/age])))
     {:foo/age 10}
     "#:foo{:age 10} is an invalid :foo/agent - missing key :person\n"
 
     (do
-      (alter-var-root #'*opts* dissoc :hide-keyword-namespaces?)
+      #?(:clj (alter-var-root #'*opts* dissoc :hide-keyword-namespaces?)
+         :cljs (set! *opts* (dissoc *opts* :hide-keyword-namespaces?)))
       (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age])))
     {:age 10 :person {:names [1]}}
     "1 in `person.names[0]` is an invalid :foo/name - should be a String\n"
@@ -271,9 +273,8 @@
                     [:a :b 1 :c :d])))))
 
 (deftest highlight-test
-  (are [input path output]
-       (= (u/highlight input path {:focus? true})
-          output)
+  (are [input path expected]
+       (= expected (u/highlight input path {:focus? true}))
 
     [3 2 1] {:in [2] :val 1} "[_ _ 1]\n     ^"
 
@@ -304,7 +305,7 @@
     {:in [:a :bar] :val 255555}
     "{:a {:bar 255555, :c _, :d _, :e _}}\n          ^^^^^^"
 
-    ;; ;; multiline hl output
+    ;; multiline hl output
     {:aaaaaaaaaaaaa
      {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
     {:in [:aaaaaaaaaaaaa :c] :val 33333}
