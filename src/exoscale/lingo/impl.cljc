@@ -173,11 +173,11 @@
   https://clojure.atlassian.net/plugins/servlet/mobile?originPath=%2Fbrowse%2FCLJ-2682#issue/CLJ-2682"
   [value path]
   (if (and (associative? value)
-           (identical? ::empty (get-in value path ::empty)))
+           (= ::empty (get-in value path ::empty)))
     (-> (reduce (fn [[m prev-path] k]
                   (let [m' (get m k ::empty)
                         path (conj prev-path k)]
-                    (if (identical? ::empty m')
+                    (if (= ::empty m')
                       ;; we have a hit on a broken path, we need to rewind by 1
                       [m prev-path]
                       [m' path])))
