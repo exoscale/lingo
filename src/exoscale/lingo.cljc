@@ -342,7 +342,8 @@
                    (s/cat :_op #{'<=}
                           :min number?
                           :_cnt ::count+arg
-                          :_max #{'Integer/MAX_VALUE}))
+                          :_max #?(:clj #{'Integer/MAX_VALUE}
+                                   :cljs #{js/Number.MAX_SAFE_INTEGER})))
                  (fn [{:keys [min]} _opts]
                    (impl/format "should contain at least %s elements"
                                 min)))
@@ -360,9 +361,11 @@
                    (s/cat :_op #{'<=}
                           :min number?
                           :_cnt ::count+arg
-                          :max number?))
+                          :max #?(:clj number?
+                                  :cljs #(and (number? %)
+                                              (< % js/Number.MAX_SAFE_INTEGER)))))
                  (fn [{:keys [min max]} _opts]
-                   (impl/format "should contain between %s %s elements"
+                   (impl/format "should contain between %s and %s elements"
                                 min max)))
 
 (set-pred-error! (s/def :exoscale.lingo.pred/compare-count
@@ -417,7 +420,7 @@
                                    :_ simple-symbol?
                                    :max number?)))
                  (fn [[_ {:keys [min max]}] _opts]
-                   (impl/format "should be an Integer between %d %d" min max)))
+                   (impl/format "should be an Integer between %d and %d" min max)))
 
 (set-pred-error! (s/def :exoscale.lingo.pred/no-method
                    (s/cat :_ #{'exoscale.lingo.pred/no-method}

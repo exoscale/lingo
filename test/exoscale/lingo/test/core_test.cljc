@@ -32,9 +32,11 @@
                        :group-or-problems? false
                        :header? false})
 
+(def problems #?(:clj :clojure.spec.alpha/problems
+                 :cljs :cljs.spec.alpha/problems))
+
 (deftest test-outputs
-  (are [spec val output] (= (l/explain-str spec val *opts*)
-                            output)
+  (are [spec val expected] (= expected (l/explain-str spec val *opts*))
 
     ::thing
     1
@@ -138,15 +140,15 @@
 
     (s/int-in 0 10)
     -1
-    "-1 is invalid - should be an Integer between 0 10\n"
+    "-1 is invalid - should be an Integer between 0 and 10\n"
 
     (s/and number? #(<= 0 % 10))
     -1
-    "-1 is invalid - should be an Integer between 0 10\n"
+    "-1 is invalid - should be an Integer between 0 and 10\n"
 
     (s/double-in :min 0 :max 10)
-    (double 11)
-    "11.0 is invalid - should be at most 10\n"
+    (double 11.1)
+    "11.1 is invalid - should be at most 10\n"
 
     (s/coll-of any? :min-count 3)
     [1]
@@ -154,11 +156,11 @@
 
     (s/coll-of any? :max-count 3)
     [1 1 1 1]
-    "[1 1 1 1] is invalid - should contain between 0 3 elements\n"
+    "[1 1 1 1] is invalid - should contain between 0 and 3 elements\n"
 
     (s/coll-of any? :max-count 3 :min-count 1)
     [1 1 1 1]
-    "[1 1 1 1] is invalid - should contain between 1 3 elements\n"
+    "[1 1 1 1] is invalid - should contain between 1 and 3 elements\n"
 
     (s/coll-of any? :count 3)
     [1 1 1 1]
@@ -184,18 +186,22 @@
     {:age 10}
     "{:age 10} is an invalid :foo/agent - missing key :person\n"
 
-    (s/def :foo/agent (s/keys :req [:foo/person :foo/age]))
+    (do
+      #?(:cljs (set! *print-namespace-maps* true))
+      (s/def :foo/agent (s/keys :req [:foo/person :foo/age])))
     {:foo/age 10}
     "#:foo{:age 10} is an invalid :foo/agent - missing key :foo/person\n"
 
     (do
-      (alter-var-root #'*opts* assoc :hide-keyword-namespaces? true)
+      #?(:clj (alter-var-root #'*opts* assoc :hide-keyword-namespaces? true)
+         :cljs (set! *opts* (assoc *opts* :hide-keyword-namespaces? true)))
       (s/def :foo/agent (s/keys :req [:foo/person :foo/age])))
     {:foo/age 10}
     "#:foo{:age 10} is an invalid :foo/agent - missing key :person\n"
 
     (do
-      (alter-var-root #'*opts* dissoc :hide-keyword-namespaces?)
+      #?(:clj (alter-var-root #'*opts* dissoc :hide-keyword-namespaces?)
+         :cljs (set! *opts* (dissoc *opts* :hide-keyword-namespaces?)))
       (s/def :foo/agent (s/keys :req-un [:foo/person :foo/age])))
     {:age 10 :person {:names [1]}}
     "1 in `person.names[0]` is an invalid :foo/name - should be a String\n"
@@ -269,9 +275,8 @@
                     [:a :b 1 :c :d])))))
 
 (deftest highlight-test
-  (are [input path output]
-       (= (u/highlight input path {:focus? true})
-          output)
+  (are [input path expected]
+       (= expected (u/highlight input path {:focus? true}))
 
     [3 2 1] {:in [2] :val 1} "[_ _ 1]\n     ^"
 
@@ -302,31 +307,33 @@
     {:in [:a :bar] :val 255555}
     "{:a {:bar 255555, :c _, :d _, :e _}}\n          ^^^^^^"
 
-    ;; ;; multiline hl output
-    {:aaaaaaaaaaaaa
-     {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
-    {:in [:aaaaaaaaaaaaa :c] :val 33333}
-    "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}")
+    ;; multiline hl output
+    #?@(:clj
+        ({:aaaaaaaaaaaaa
+          {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd 2 :c 33333 :d 4 :e 5}}
+         {:in [:aaaaaaaaaaaaa :c] :val 33333}
+         "{:aaaaaaaaaaaaa\n {:bbbbbbbbbbbbbbbbbdddddddddddddddddddddddddddddddddddddd _,\n  :c 33333,\n     ^^^^^\n  :d _,\n  :e _}}")))
   (is (= ["[1]\n ^\n should be a string with bla bla bla"]
          (->> (l/explain-data ::things [1])
-              :clojure.spec.alpha/problems
+              (problems)
               (map :exoscale.lingo.explain/highlight)))))
 
-(deftest test-group-map-keys
-  (is (= "missing keys :age, :person"
-         (-> (l/explain-data :foo/agent2 {} {:group-missing-keys? true})
-             :clojure.spec.alpha/problems
-             first
-             :exoscale.lingo.explain/message)))
+#?(:clj
+   (deftest test-group-map-keys
+     (is (= "missing keys :age, :person"
+            (-> (l/explain-data :foo/agent2 {} {:group-missing-keys? true})
+                (problems)
+                first
+                :exoscale.lingo.explain/message)))
 
-  (is (= #{"missing keys :age, :person"
-           "missing keys :names"}
-         (->> (l/explain-data (s/tuple :foo/agent2 :foo/person)
-                              [{} {}]
-                              {:group-missing-keys? true})
-              :clojure.spec.alpha/problems
-              (map :exoscale.lingo.explain/message)
-              set))))
+     (is (= #{"missing keys :age, :person"
+              "missing keys :names"}
+            (->> (l/explain-data (s/tuple :foo/agent2 :foo/person)
+                                 [{} {}]
+                                 {:group-missing-keys? true})
+                 (problems)
+                 (map :exoscale.lingo.explain/message)
+                 set)))))
 
 (deftest test-group-or-keys
   (s/def ::test-group-or-keys (s/nilable string?))
@@ -336,7 +343,7 @@
                               1
                               {:group-or-problems? true
                                :group-missing-keys? true})
-              :clojure.spec.alpha/problems
+              (problems)
               (map :exoscale.lingo.explain/message)
               set)))
   (is (= #{"should be a String OR should be an Integer"}
@@ -344,7 +351,7 @@
                               :kw
                               {:group-or-problems? true
                                :group-missing-keys? true})
-              :clojure.spec.alpha/problems
+              (problems)
               (map :exoscale.lingo.explain/message)
               set)))
 
@@ -354,7 +361,7 @@
                               ["" 1]
                               {:group-or-problems? true
                                :group-missing-keys? true})
-              :clojure.spec.alpha/problems
+              (problems)
               (map :exoscale.lingo.explain/message)
               set))
       "ensure there is no duplication of messages in the final pb string")
@@ -369,7 +376,7 @@
                                ::test-group-or-keys3 ""}
                               {:group-or-problems? true
                                :group-missing-keys? true})
-              :clojure.spec.alpha/problems
+              (problems)
               (map :exoscale.lingo.explain/message)
               set))
       "grouping does not alter the other problems"))
@@ -403,24 +410,44 @@
   (is (= (l/explain-data
           :event/event
           {:event/type :yolo})
-         #:clojure.spec.alpha{:problems
-                              '({:path [:yolo],
-                                 :exoscale.lingo.explain.pred/spec
-                                 :exoscale.lingo.pred/no-method,
-                                 :pred exoscale.lingo.test.core-test/event-type,
-                                 :via [:event/event],
-                                 :val #:event{:type :yolo},
-                                 :exoscale.lingo.explain.pred/message
-                                 "should allow dispatch on exoscale.lingo.test.core-test/event-type",
-                                 :reason "no method",
-                                 :exoscale.lingo.explain/message
-                                 "should allow dispatch on exoscale.lingo.test.core-test/event-type",
-                                 :exoscale.lingo.explain.pred/vals
-                                 {:_ exoscale.lingo.pred/no-method,
-                                  :method exoscale.lingo.test.core-test/event-type},
-                                 :in []}),
-                              :spec :event/event,
-                              :value #:event{:type :yolo}}
+         #?(:clj
+            #:clojure.spec.alpha{:problems
+                                 '({:path [:yolo],
+                                    :exoscale.lingo.explain.pred/spec
+                                    :exoscale.lingo.pred/no-method,
+                                    :pred exoscale.lingo.test.core-test/event-type,
+                                    :via [:event/event],
+                                    :val #:event{:type :yolo},
+                                    :exoscale.lingo.explain.pred/message
+                                    "should allow dispatch on exoscale.lingo.test.core-test/event-type",
+                                    :reason "no method",
+                                    :exoscale.lingo.explain/message
+                                    "should allow dispatch on exoscale.lingo.test.core-test/event-type",
+                                    :exoscale.lingo.explain.pred/vals
+                                    {:_ exoscale.lingo.pred/no-method,
+                                     :method exoscale.lingo.test.core-test/event-type},
+                                    :in []}),
+                                 :spec :event/event,
+                                 :value #:event{:type :yolo}}
+            :cljs
+            #:cljs.spec.alpha {:problems
+                               '({:path [:yolo],
+                                  :exoscale.lingo.explain.pred/spec
+                                  :exoscale.lingo.pred/no-method,
+                                  :pred exoscale.lingo.test.core-test/event-type,
+                                  :via [:event/event],
+                                  :val #:event{:type :yolo},
+                                  :exoscale.lingo.explain.pred/message
+                                  "should allow dispatch on exoscale.lingo.test.core-test/event-type",
+                                  :reason "no method",
+                                  :exoscale.lingo.explain/message
+                                  "should allow dispatch on exoscale.lingo.test.core-test/event-type",
+                                  :exoscale.lingo.explain.pred/vals
+                                  {:_ exoscale.lingo.pred/no-method,
+                                   :method exoscale.lingo.test.core-test/event-type},
+                                  :in []}),
+                               :spec :event/event,
+                               :value #:event{:type :yolo}})
          (l/explain-data
           :event/event
           {:event/type :yolo}))))
