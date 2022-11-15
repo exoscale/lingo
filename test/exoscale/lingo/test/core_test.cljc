@@ -186,16 +186,18 @@
     {:age 10}
     "{:age 10} is an invalid :foo/agent - missing key :person\n"
 
-    #?@(:clj
-        ((s/def :foo/agent (s/keys :req [:foo/person :foo/age]))
-         {:foo/age 10}
-         "#:foo{:age 10} is an invalid :foo/agent - missing key :foo/person\n"
+    (do
+      #?(:cljs (set! *print-namespace-maps* true))
+      (s/def :foo/agent (s/keys :req [:foo/person :foo/age])))
+    {:foo/age 10}
+    "#:foo{:age 10} is an invalid :foo/agent - missing key :foo/person\n"
 
-         (do
-           (alter-var-root #'*opts* assoc :hide-keyword-namespaces? true)
-           (s/def :foo/agent (s/keys :req [:foo/person :foo/age])))
-         {:foo/age 10}
-         "#:foo{:age 10} is an invalid :foo/agent - missing key :person\n"))
+    (do
+      #?(:clj (alter-var-root #'*opts* assoc :hide-keyword-namespaces? true)
+         :cljs (set! *opts* (assoc *opts* :hide-keyword-namespaces? true)))
+      (s/def :foo/agent (s/keys :req [:foo/person :foo/age])))
+    {:foo/age 10}
+    "#:foo{:age 10} is an invalid :foo/agent - missing key :person\n"
 
     (do
       #?(:clj (alter-var-root #'*opts* dissoc :hide-keyword-namespaces?)
