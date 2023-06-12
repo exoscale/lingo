@@ -5,6 +5,8 @@
             [exoscale.lingo.utils :as u]
             [exoscale.lingo.impl :as impl]))
 
+(create-ns 'exoscale.lingo.pred)
+
 (def registry-ref
   (atom (merge #:exoscale.lingo.registry.spec{:message {}}
                #:exoscale.lingo.registry.pred{:conformers #{}
