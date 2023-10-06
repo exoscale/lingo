@@ -1,9 +1,9 @@
 (ns exoscale.lingo.test.core-test
-  (:require [clojure.test :refer [are deftest is]]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.test :refer [are deftest is]]
             [exoscale.lingo :as l]
-            [exoscale.lingo.impl :as impl]
             [exoscale.lingo.highlight :as u]
-            [clojure.spec.alpha :as s]))
+            [exoscale.lingo.impl :as impl]))
 
 (defn f2? [_] false)
 (defn f3? [_] false)
