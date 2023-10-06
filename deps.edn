@@ -5,7 +5,8 @@
                                  :sign-releases? false
                                  :repository "clojars"}
 
- :deps {org.clojure/clojure {:mvn/version "1.11.1"}}
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        io.github.eerohele/pp {:git/tag "2023-10-05.5", :git/sha "7059eec"}}
 
  :aliases
  {:project {:deps {io.github.exoscale/tools.project {:git/sha "5f24196ebea4dc6e601d201d97b463ea26923c7e"}}
