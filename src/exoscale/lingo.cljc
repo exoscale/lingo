@@ -2,8 +2,8 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [exoscale.lingo.highlight :as h]
-            [exoscale.lingo.utils :as u]
-            [exoscale.lingo.impl :as impl]))
+            [exoscale.lingo.impl :as impl]
+            [exoscale.lingo.utils :as u]))
 
 (create-ns 'exoscale.lingo.pred)
 
@@ -253,9 +253,9 @@
 (set-spec-error! `ratio? "should be a Ratio")
 (set-spec-error! `vector? "should be a Vector")
 (set-spec-error! `associative? "should be an Associative (map, vector)")
-(set-spec-error! `sequential?  "should be a Sequential")
-(set-spec-error! `seqable?  "should be a Seqable")
-(set-spec-error! `indexed?  "should be an Indexed")
+(set-spec-error! `sequential? "should be a Sequential")
+(set-spec-error! `seqable? "should be a Seqable")
+(set-spec-error! `indexed? "should be an Indexed")
 (set-spec-error! `number? "should be a Number")
 (set-spec-error! `bytes? "should be byte array")
 (set-spec-error! `float? "should be a Float")
