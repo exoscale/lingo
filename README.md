@@ -14,9 +14,19 @@ It differs from other similar libraries in that the focus is more on
 lingo without its error rendering facilities in order to just infer more
 information about your errors.
 
-Internally building this data is done via transducers that are run against the
-explain-data problems. It's quite easy to pull this apart and build your own if
-you want/need to.
+### TLDR
+
+"Rust-lookalike" error messages for spec
+
+```clj
+(s/def :foo/t-shirts (s/coll-of :foo/t-shirt))
+(s/def :foo/t-shirt (s/keys :req-un [:foo/size :foo/color]))
+(s/def :foo/size (s/int-in 1 3))
+(s/def :foo/color #{:red :blue :green})
+
+(exoscale.lingo/explain :foo/t-shirts [{:size 5 :color :pink}])
+```
+<img src="example.png" width="80%">
 
 ## Installation
 
