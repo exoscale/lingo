@@ -162,7 +162,7 @@ If you want to have more precise error handling based on the problem pred only
 result in the addition of the `:exoscale.lingo.explain.pred/*` keys to the
 problem.
 
-There is this libary called clojure.spec that's pretty good to parse forms and extract information from them, we happen to use it to do just that:
+There is this library called clojure.spec that's pretty good to parse forms and extract information from them, we happen to use it to do just that:
 
 ``` clj
 (s/def ::int-in-range (s/cat :_ #{'clojure.spec.alpha/int-in-range?}
