@@ -1,6 +1,5 @@
 (ns exoscale.lingo.highlight
-  (:require #?(:cljs [clojure.pprint :as pp]
-               :clj [me.flowthing.pp :as pp])
+  (:require [me.flowthing.pp :as pp]
             [clojure.string :as str]
             [exoscale.lingo.utils :as u]))
 
