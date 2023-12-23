@@ -1,10 +1,10 @@
 (ns exoscale.lingo.impl
   (:refer-clojure :exclude [format])
-  (:require [clojure.walk :as walk]
+  (:require #?@(:cljs [[goog.string]
+                       [goog.string.format]])
             [clojure.spec.alpha :as s]
-            [exoscale.lingo.utils :as u]
-            #?@(:cljs [[goog.string]
-                       [goog.string.format]])))
+            [clojure.walk :as walk]
+            [exoscale.lingo.utils :as u]))
 
 (def format
   #?(:clj clojure.core/format
@@ -138,7 +138,7 @@
                                               pbs)]
                        (-> (first pbs)
                            (select-keys [:path :via :val :in])
-                           (assoc :pred (list  'contains-keys? '% missing-keys)
+                           (assoc :pred (list 'contains-keys? '% missing-keys)
                                   :exoscale.lingo.explain.pred/spec :exoscale.lingo.pred/contains-keys
                                   :exoscale.lingo.explain.pred/vals {:keys missing-keys}))))
                    (vals mk-by-path))))

@@ -375,41 +375,47 @@
                          (s/cat :op #{'= '< '> '<= '>= 'not=}
                                 :_ ::count+arg
                                 :x any?)
-                         :count-2 (s/cat :op #{'= '< '> '<= '>= 'not=}
-                                         :x number?
-                                         :_ ::count+arg)))
-                 (fn [[_ {:keys [op x]}] _opts]
+                         :count-2
+                         (s/cat :op #{'= '< '> '<= '>= 'not=}
+                                :x number?
+                                :_ ::count+arg)))
+
+                 (fn [[t {:keys [op x]}] _opts]
                    (impl/format "should contain %s %s %s"
-                                (case op
-                                  not= "not ="
-                                  = "exactly"
-                                  > "more than"
-                                  < "less than"
-                                  >= "at least"
-                                  <= "at most")
+                                (case [t op]
+                                  ([:count-1 #?(:cljs 'not= :clj not=)] [:count-2 #?(:cljs 'not= :clj not=)]) "not ="
+                                  ([:count-1 #?(:cljs '= :clj =)] [:count-2 #?(:cljs '= :clj =)]) "exactly"
+                                  ([:count-1 #?(:cljs '> :clj >)] [:count-2 #?(:cljs '< :clj <)]) "more than"
+                                  ([:count-1 #?(:cljs '< :clj <)] [:count-2 #?(:cljs '> :clj >)]) "less than"
+                                  ([:count-1 #?(:cljs '>= :clj >=)] [:count-2 #?(:cljs '<= :clj <=)]) "at least"
+                                  ([:count-1 #?(:cljs '<= :clj <=)] [:count-2 #?(:cljs '>= :clj >=)]) "at most")
                                 x
                                 (if (= 1 x)
                                   "element"
                                   "elements"))))
 
-(set-pred-error! (s/def :exoscale.lingo.pred/num-compare
-                   (s/or :count-1
-                         (s/cat :op #{'= '< '> '<= '>= 'not=}
-                                :_ simple-symbol?
-                                :x any?)
-                         :count-2 (s/cat :op #{'= '< '> '<= '>= 'not=}
-                                         :x any?
-                                         :_ simple-symbol?)))
-                 (fn [[_ {:keys [op x]}] _opts]
-                   (impl/format "should %s %s"
-                                (case op
-                                  not= "not be equal to"
-                                  = "be equal to"
-                                  > "be greater than"
-                                  < "be less than"
-                                  >= "be at least"
-                                  <= "be at most")
-                                x)))
+(let [x [:a :b]]
+  (cond)
+
+  (set-pred-error! (s/def :exoscale.lingo.pred/num-compare
+                     (s/or :count-1
+                           (s/cat :op #{'= '< '> '<= '>= 'not=}
+                                  :_ simple-symbol?
+                                  :x any?)
+                           :count-2
+                           (s/cat :op #{'= '< '> '<= '>= 'not=}
+                                  :x any?
+                                  :_ simple-symbol?)))
+                   (fn [[t {:keys [op x]}] _opts]
+                     (impl/format "should %s %s"
+                                  (case [t op]
+                                    ([:count-1 #?(:cljs 'not= :clj not=)] [:count-2 #?(:cljs 'not= :clj not=)]) "not be equal to"
+                                    ([:count-1 #?(:cljs '= :clj =)] [:count-2 #?(:cljs '= :clj =)]) "be equal to"
+                                    ([:count-1 #?(:cljs '> :clj >)] [:count-2 #?(:cljs '< :clj <)]) "be greater than"
+                                    ([:count-1 #?(:cljs '< :clj <)] [:count-2 #?(:cljs '> :clj >)]) "be less than"
+                                    ([:count-1 #?(:cljs '>= :clj >=)] [:count-2 #?(:cljs '<= :clj <=)]) "be at least"
+                                    ([:count-1 #?(:cljs '<= :clj <=)] [:count-2 #?(:cljs '>= :clj >=)]) "be at most")
+                                  x))))
 
 (set-pred-error! (s/def :exoscale.lingo.pred/int-in-range
                    (s/or :_ (s/cat :_ #{#?(:clj 'clojure.spec.alpha/int-in-range?
