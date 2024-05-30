@@ -5,8 +5,6 @@
             [exoscale.lingo.impl :as impl]
             [exoscale.lingo.utils :as u]))
 
-(create-ns 'exoscale.lingo.pred)
-
 (def registry-ref
   (atom (merge #:exoscale.lingo.registry.spec{:message {}}
                #:exoscale.lingo.registry.pred{:conformers #{}
@@ -75,7 +73,7 @@
                  pred-data (if (and (= reason "no method")
                                     (not (= :exoscale.lingo.pred/symbol
                                             (:exoscale.lingo.explain.pred/val pred-data))))
-                             (conformer conformers `(exoscale.lingo.pred/no-method ~pred))
+                             (conformer conformers `(exoscale.lingo/pred-no-method ~pred))
                              pred-data)]
              (cond-> pb
                pred-data (into pred-data)))))))
@@ -431,7 +429,7 @@
                    (impl/format "should be an Integer between %d and %d" min max)))
 
 (set-pred-error! (s/def :exoscale.lingo.pred/no-method
-                   (s/cat :_ #{'exoscale.lingo.pred/no-method}
+                   (s/cat :_ #{'exoscale.lingo/pred-no-method}
                           :method ident?))
                  (fn [{:keys [method]} _opts]
                    (impl/format "should allow dispatch on %s" method)))

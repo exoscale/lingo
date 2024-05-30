@@ -436,7 +436,7 @@
                                     :exoscale.lingo.explain/message
                                     "should allow dispatch on exoscale.lingo.test.core-test/event-type",
                                     :exoscale.lingo.explain.pred/vals
-                                    {:_ exoscale.lingo.pred/no-method,
+                                    {:_ exoscale.lingo/pred-no-method,
                                      :method exoscale.lingo.test.core-test/event-type},
                                     :in []}),
                                  :spec :event/event,
@@ -455,7 +455,7 @@
                                   :exoscale.lingo.explain/message
                                   "should allow dispatch on exoscale.lingo.test.core-test/event-type",
                                   :exoscale.lingo.explain.pred/vals
-                                  {:_ exoscale.lingo.pred/no-method,
+                                  {:_ exoscale.lingo/pred-no-method,
                                    :method exoscale.lingo.test.core-test/event-type},
                                   :in []}),
                                :spec :event/event,
