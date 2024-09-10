@@ -6,7 +6,7 @@
                                  :repository "clojars"}
 
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
-        me.flowthing/pp {:mvn/version "2023-11-25.47"}}
+        me.flowthing/pp {:mvn/version "2024-09-09.69"}}
 
  :aliases
  {:project {:deps {io.github.exoscale/tools.project {:git/sha "5f24196ebea4dc6e601d201d97b463ea26923c7e"}}
