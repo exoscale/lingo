@@ -1,7 +1,7 @@
 (ns exoscale.lingo.highlight
-  (:require [me.flowthing.pp :as pp]
-            [clojure.string :as str]
-            [exoscale.lingo.utils :as u]))
+  (:require [clojure.string :as str]
+            [exoscale.lingo.utils :as u]
+            [me.flowthing.pp :as pp]))
 
 (defn- subpath?
   "True'ish if `x` is a subpath of `y`. Could use subvec but will do for now"
@@ -120,10 +120,10 @@
   [value
    {:as _pb
     :keys [in val pred]
-    :exoscale.lingo.explain/keys [message]
-    :or {message (str "Does not conform to " pred)}}
+    :exoscale.lingo.explain/keys [message]}
    {:as opts :keys [colors? highlight-inline-message?]}]
-  (let [error-color (when colors? :red)]
+  (let [message (or message (str message "Does not conform to " pred))
+        error-color (when colors? :red)]
     (->> (prep-val value in opts)
          str/split-lines
          (transduce (comp
